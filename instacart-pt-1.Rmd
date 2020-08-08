@@ -1,0 +1,77 @@
+---
+title: "Instacart - parte 1"
+author: "Leonardo Giovanelli, Marcelo Franceschini, Rafael Costa, Sérgio Gomes, Viviane Sanchez"
+date: `r Sys.Date()`
+institute: "PADS - Insper"
+encoding: "UTF-8"
+output: 
+ flexdashboard::flex_dashboard:
+    storyboard: true
+    
+---
+
+```{r setup, include=FALSE, fig.align = 'center'}
+
+knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE)
+
+#install.packages("flexdashboard")
+
+```
+
+# Introdução
+
+- Análise exploratória [Instacart](https://www.instacart.com/datasets/grocery-shopping-2017)
+
+
+---
+# Pacotes
+
+```{r echo = TRUE, eval = FALSE, tidy=FALSE}
+
+library(tidyverse)
+library(ggrepel)
+library(ggthemes)
+library(grid)
+
+```
+
+---
+# Dados
+
+```{r echo = TRUE, eval = FALSE, tidy=FALSE}
+
+arquivos <- list.files(path = 'data/', 
+                       pattern = "*.csv",
+                       full.names = TRUE) %>% sort()
+
+aisles <- read_csv(arquivos[1])
+
+departments <- read_csv(arquivos[2])
+
+op_prior <- read_csv(arquivos[3])
+
+op_train <- read_csv(arquivos[4])
+
+orders <- read_csv(arquivos[5])
+
+products <- read_csv(arquivos[6])
+
+```
+
+---
+
+# Análise exploratória
+
+```{r}
+
+x <- tibble(carac = stringr::str_length(aisles$aisle))
+
+x %>% ggplot(aes(carac)) +
+  geom_histogram(bins = 20)
+
+
+```
+
+
+
+
