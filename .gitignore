@@ -168,4 +168,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-.DStore
+.DS_Store
