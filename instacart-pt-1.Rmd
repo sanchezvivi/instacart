@@ -29,6 +29,8 @@ teste
 ```{r echo = TRUE, eval = FALSE, tidy=FALSE}
 
 library(tidyverse)
+library(skimr)
+library(inspectdf)
 library(ggrepel)
 library(ggthemes)
 library(grid)
@@ -56,9 +58,22 @@ orders <- read_csv(arquivos[5])
 
 products <- read_csv(arquivos[6])
 
+
+
 ```
 
 ---
+
+```{r}
+
+skim(aisles)
+skim(departments)
+skim(orders)
+skim(products)
+
+
+```
+
 
 # Análise exploratória
 
