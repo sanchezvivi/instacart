@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE)
 
 - Análise exploratória [Instacart](https://www.instacart.com/datasets/grocery-shopping-2017)
 
-
+teste
 ---
 # Pacotes
 
