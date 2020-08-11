@@ -49,6 +49,11 @@ Certezas
  - Quanto maior o número de pedidos maior a fidelidade e rentabilidade
  - Uma diminuição da recorrência de pedidos possui maior chance de churn
 
+Ordem das análises
+    1. Hipótese
+    2. Premissas de análise
+    3. Gráficos
+    4. Insights
 
 ### Pedidos (Vivi)
 
@@ -58,12 +63,6 @@ Certezas
     - heatmap horários
     - gráficos da frequência de compra
     
-  - Comentários
-    1. Hipótese
-    2. Premissas de análise
-    3. Gráficos
-    4. Insights
-
 ### Produtos (Marcelo/Rafa)
 
   - Produtos 
@@ -79,6 +78,7 @@ Certezas
 ## Pesquisa (Leo)
 
 - Falar sobre experiência da entrevista
+- Desafios/Pontos a melhorar
 - pessoas entrevistadas 
 - números
 - wordcloud
