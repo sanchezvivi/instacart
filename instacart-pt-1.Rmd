@@ -1,12 +1,14 @@
 ---
 title: "Instacart - parte 1"
 author: "Leonardo Giovanelli, Marcelo Franceschini, Rafael Costa, Sérgio Gomes, Viviane Sanchez"
-date: `r Sys.Date()`
+date: '`r Sys.Date()`'
 institute: "PADS - Insper"
 encoding: "UTF-8"
 output: 
  flexdashboard::flex_dashboard:
     storyboard: true
+    social: menu
+    source: embed
     
 ---
 
@@ -14,79 +16,90 @@ output:
 
 knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE)
 
-#install.packages("flexdashboard")
-
-```
-
-# Introdução
-
-- Análise exploratória [Instacart](https://www.instacart.com/datasets/grocery-shopping-2017)
-
-teste
----
-# Pacotes
-
-```{r echo = TRUE, eval = FALSE, tidy=FALSE}
-
+library(flexdashboard)
+library(plotly)
 library(tidyverse)
 library(skimr)
 library(inspectdf)
 library(ggrepel)
 library(ggthemes)
 library(grid)
+library(lubridate)
 
-```
 
----
-# Dados
-
-```{r echo = TRUE, eval = FALSE, tidy=FALSE}
 
 arquivos <- list.files(path = 'data/', 
                        pattern = "*.csv",
                        full.names = TRUE) %>% sort()
 
-aisles <- read_csv(arquivos[1])
+aisles_raw <- read_csv(arquivos[1])
 
-departments <- read_csv(arquivos[2])
+departments_raw <- read_csv(arquivos[2])
 
-op_prior <- read_csv(arquivos[3])
+op_prior_raw <- read_csv(arquivos[3])
 
-op_train <- read_csv(arquivos[4])
+op_train_raw <- read_csv(arquivos[4])
 
-orders <- read_csv(arquivos[5])
+orders_raw <- read_csv(arquivos[5])
 
-products <- read_csv(arquivos[6])
+products_raw <- read_csv(arquivos[6])
 
 
-
-```
-
----
-
-```{r}
-
-skim(aisles)
-skim(departments)
-skim(orders)
-skim(products)
-
+orders <- orders_raw %>% 
+  mutate(order_hour_of_day = as.numeric(order_hour_of_day))
 
 ```
 
+### Referências
 
-# Análise exploratória
+- Análise exploratória [Instacart](https://www.instacart.com/datasets/grocery-shopping-2017)
 
-```{r}
+- [Flexdashbaord](https://rmarkdown.rstudio.com/flexdashboard/using.html#overview)
 
-x <- tibble(carac = stringr::str_length(aisles$aisle))
+### Pedidos
 
-x %>% ggplot(aes(carac)) +
-  geom_histogram(bins = 20)
+```{r avg_days}
 
+library(d3heatmap)
+
+avg_days_total <- orders %>% 
+  group_by(order_dow, order_hour_of_day) %>% 
+  summarise(avg_days = mean(days_since_prior_order, na.rm = T)) %>% 
+  pivot_wider(names_from = order_hour_of_day, values_from = avg_days) %>% 
+  ungroup()
+
+d3heatmap(avg_days_total, scale = 'column')
 
 ```
 
 
+```{r avg_days_10, echo = FALSE}
+
+orders_count <- orders %>% 
+  group_by(user_id) %>% 
+  count() %>% 
+  transmute(compras = n)
+
+orders_count_10 <- orders_count %>% 
+              filter(compras <= 10)
+
+avg_days_10 <- orders %>% 
+  semi_join(orders_count_10, by = 'user_id') %>% 
+  group_by(order_dow, order_hour_of_day) %>% 
+  summarise(avg_days = mean(days_since_prior_order, na.rm = T)) %>% 
+  pivot_wider(names_from = order_hour_of_day, values_from = avg_days) %>% 
+  ungroup()
 
 
+d3heatmap(avg_days_10, scale = 'column')
+
+```
+
+***
+comentários
+Premissas
+
+### Produtos
+
+### 
+ 
