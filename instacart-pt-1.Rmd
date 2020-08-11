@@ -36,9 +36,9 @@ aisles_raw <- read_csv(arquivos[1])
 
 departments_raw <- read_csv(arquivos[2])
 
-#op_prior_raw <- read_csv(arquivos[3])
+op_prior_raw <- read_csv(arquivos[3])
 
-#op_train_raw <- read_csv(arquivos[4])
+op_train_raw <- read_csv(arquivos[4])
 
 orders_raw <- read_csv(arquivos[5])
 
@@ -50,16 +50,13 @@ orders <- orders_raw %>%
 
 ```
 
-# Referências
+### Referências
 
 - Análise exploratória [Instacart](https://www.instacart.com/datasets/grocery-shopping-2017)
 
 - [Flexdashbaord](https://rmarkdown.rstudio.com/flexdashboard/using.html#overview)
 
-### Recorrência de Pedidos
-
-Row
--------------------------------------
+### Pedidos
 
 ```{r avg_days}
 
@@ -72,8 +69,6 @@ avg_days_total <- orders %>%
   ungroup()
 
 d3heatmap(avg_days_total, scale = 'column')
-
-?d3heatmap
 
 ```
 
@@ -101,82 +96,10 @@ d3heatmap(avg_days_10, scale = 'column')
 ```
 
 ***
-
+comentários
 Premissas
- -
- -
- -
+
+### Produtos
+
+### 
  
- 
-# Produtos
-
-- Pré-Análises
-
-```{r produtos}
-
-#sum(!(orders$order_id %in% op_prior$order_id))
-
-orders_rec <- orders %>%
-  filter(!is.na(days_since_prior_order))
-
-# Incluindo o produto na base de pedidos anteriores
-ord_prior_prod <- op_prior %>% 
-  left_join(products)
-
-```
-
-
-```{r produtos2}
-
-x <- orders_rec_count %>% filter(compras > 10)
-
-mean(x$compras)
-
-base_orders_rec_count_10_complete$compras %>% mean()
-
-
-base_orders %>% filter(is.na(days_since_prior_order)) %>% count()
-
-
-
-```
-
-
-- Produtos mais consumidospor clientes com menos de 10 pedidos
-
-```{r produtos3}
-
-orders_rec_count <- orders_rec %>% 
-  group_by(user_id) %>% 
-  count() %>% 
-  transmute(compras = n)
-
-orders_rec_count_10 <- orders_rec_count %>% 
-              filter(compras <= 10)
-
-orders_rec_count_10 %>% 
-  nrow()
-
-orders_rec_count_10_complete <- orders_rec_count_10 %>% 
-                                left_join(orders_rec)
-
-orders_rec_count_10_complete_prod <- orders_rec_count_10_complete %>% 
-                                          left_join(ord_prior_prod)
-
-orders_rec_count_10_complete_prod_dept <- orders_rec_count_10_complete_prod %>%   
-                                          left_join(departments)
-
-base_graf1 <- orders_rec_count_10_complete_prod_dept %>% 
-  group_by(department) %>% 
-  count() %>% 
-  transmute(quantidade = n) %>% 
-  arrange(desc(quantidade))
-
-base_graf1[1:10,] %>% 
-  ggplot(aes(x = reorder(department, -quantidade), y = quantidade)) +
-                      geom_col(na.rm = TRUE)
-
-```
-
-### Persona
-
