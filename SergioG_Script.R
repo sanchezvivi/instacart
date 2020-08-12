@@ -5,7 +5,7 @@
 #              'inspectdf', 'skimr', 'naniar', 'visdat', 'tidymodels', 
 #              'klaR', 'corrplot', 'NetCluster', 'factoextra', 'maptree', 'treemap', 'DT','patchwork')
 
-biblios <- c('tidyverse', 'stringr', 'janitor', 'inspectdf', 'dplyr', 'skimr')
+biblios <- c('tidyverse', 'stringr', 'janitor', 'inspectdf', 'dplyr', 'skimr', 'plotly')
 
 for (i in biblios){
   if(!require(i, character.only = TRUE)){install.packages(paste0(i)); library(i, character.only = TRUE)}
@@ -81,7 +81,19 @@ base_orders %>% filter(is.na(days_since_prior_order)) %>% count()
 
 # Analise 2020-08-10 ------------------------------------------------------
 
+
+
 # Verificando se na base_train existem elementos que já estão nas outras bases.
+base_orders %>% skim()
+
+base_orders %>% group_by(user_id) %>% summarise(n_pedidos = max(order_number))
+
+n_vezes_mais30 <- base_orders %>% dplyr::filter(days_since_prior_order == 30) %>% group_by(user_id) %>% summarise(n_30 = n())
+
+max(n_vezes_mais30$n_30)
+
+base_orders$days_since_prior_order[base_orders$days_since_prior_order == -1] <- -1
+
 base_orders %>% summary()
 
 base_ord_train %>% skim()
@@ -154,8 +166,7 @@ x_4<- function(x) sqrt(sqrt(x))
 order_n_total %>% ggplot() +
   geom_histogram(aes(x = quant_prod), bins = bin/10,) +
   scale_y_continuous(trans = scales::trans_new(name = "sqrt_sqrt",transform = x_4, inverse = x4)) +
-  labs(title = "Histograma de No Produtos comprados") +
-  geom_text(aes(label = ))
+  labs(title = "Histograma de No Produtos comprados") 
 
 order_n_total %>% ggplot(aes(x = quant_prod)) +
   geom_freqpoly(bins = bin/10) +
@@ -196,9 +207,13 @@ ais_ord_cart <- base_ord_geral_prod %>% group_by(aisle, add_to_cart_order) %>%
   mutate(rec_perc = recorrencias/quantidade) %>% 
   arrange(-quantidade)
 
-ais_ord_cart %>% ggplot() +
-                  geom_tile(aes(aisle,add_to_cart_order))
-# mudar cor e escala do gráfico
+hm1 <- ais_ord_cart %>% ggplot() +
+                            geom_tile(aes(aisle,add_to_cart_order, fill = rec_perc*100)) +
+                            scale_fill_gradient2()+
+                            theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1))
+ggplotly(hm1, tooltip = "rec_perc")
+
+
 
 
 # Produtos que entram primeiro na cesta -----------------------------------
@@ -237,3 +252,17 @@ max(base_ord_geral_prod$reordered)
 
 # Seperar por quantidades de produtos comprados em cada compra
 # Fazer a relação de quantidade comprada e ordem de inserção na cesta
+
+
+
+# Comentários 2020-08-11
+# Na verdade, há um alto número de compras com 30 dias desde a última compra, pois o site deixa de registrar após mais de 30 dias
+
+# Na tabela de 'order', verificar que o 'days_since_last_order' = NA, ocorre sempre para a primeira compra. Problema ao buscar o valor máximo, pois NA é maior que qualquer numero.
+
+# Importante considerar que a base não possui somente os últimos 30 dias, porém sim todos as compras, somente não contabilizando intervalos superiores a 30 dias.
+
+# Verificar a soma da diferença entre a o 'days_since_last_order' entre uma compra e a anterior. Se essa soma for 
+
+# Critério para usuário menos recorrente: média móvel (5 compras) de days_since_prior_order > 8 (mediana), não contabilizando a primeira compra pela ocorrencia de NA. (pegar código Vivi)
+
