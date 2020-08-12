@@ -38,86 +38,17 @@ library(lubridate)
 library(grid)
 library(plotly)
 library(RcppRoll)
+library(extrafont)
 
+font_import()
 
+theme_set(theme_minimal())
+theme_update(text = element_text(family = "Brandon Text"),
+             plot.title = element_text(face = "bold"))
+
+source('instacart_palette.R')
+          
 ```
-
-- Instacart colors
-
-```{r}
-
-font = 'opensans'
-
-instacart_colors <- c("blue" = "#007bff", 
-                      "indigo"= "#6610f2",
-                      "purple"= "#6f42c1", 
-                      "pink"= "#e83e8c",
-                      "red"= "#dc3545",
-                      "orange"= "#fd7e14",
-                      "yellow"= "#ffc107", 
-                      "green"= "#34a31a",
-                      "dark-green" = "#0e491f", 
-                      "teal" = "#20c997", 
-                      "cyan"= "#17a2b8", 
-                      "white" = "#fff", 
-                      "gray"= "#6c757d", 
-                      "gray-dark"= "#343a40",
-                      "light-blue"= "#eff9ff", 
-                      "dark"= "#343a40")
-
-ic_cols <- function(...){
-  cols <- c(...)
-  if(is.null(cols))
-    return (instacart_colors)
-  instacart_colors[cols]
-}
-
-instacart_palettes <- list(
-  `main`  = ic_cols("green", "orange"),
-
-  `cool`  = ic_cols("blue", "cyan", "indigo"),
-
-  `hot`   = ic_cols("yellow","orange","red"),
-  
-  `greens` = ic_cols("green", "dark-green"),
-
-  `mixed` = ic_cols("green", "orange", "cyan", "yellow", "red"),
-
-  `contrast`  = ic_cols("orange","light-blue","dark-green")
-)
-
-instacart_pal <- function(palette = "main", reverse = FALSE, ...) {
-  
-  pal <- instacart_palettes[[palette]]
-
-  if (reverse) pal <- rev(pal)
-
-  colorRampPalette(pal, ...)
-}
-
-scale_color_instacart <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) {
-  pal <- instacart_pal(palette = palette, reverse = reverse)
-
-  if (discrete) {
-    discrete_scale("colour", paste0("instacart_", palette), palette = pal, ...)
-  } else {
-    scale_color_gradientn(colours = pal(256), ...)
-  }
-}
-
-scale_fill_instacart <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) {
-  
-  pal <- instacart_pal(palette = palette, reverse = reverse)
-
-  if (discrete) {
-    discrete_scale("fill", paste0("instacart_", palette), palette = pal, ...)
-  } else {
-    scale_fill_gradientn(colours = pal(256), ...)
-  }
-}
-
-```
-
 
 # Arquivos
 
@@ -161,24 +92,22 @@ orders <- orders_raw %>%
   glimpse
 
   
-orders %>% 
-  filter(is.na(days_since_prior_order)) %>% 
-  group_by(order_number) %>% 
-  count()
-
 ```
 
 
 ```{r}
 
-orders %>% 
+hist_ma <- orders %>% 
   na.omit() %>% 
   ggplot(aes(x = days_ma)) +
   geom_bar(fill = ic_cols('dark-green')) +
   geom_vline(xintercept = 8, color = ic_cols('orange'), 
-             linetype = 'dashed') +
-  theme_minimal()
-
+             linetype = 'dashed', size = 0.8) +
+  scale_y_continuous(label = scales::label_number_si()) +
+  labs(title = 'Distribuição da média móvel de dias entre os últimos 5 pedidos',
+       x = 'Dias desde o último pedido', y = '')
+  
+ggplotly(hist_ma)
 
 ```
 
@@ -195,9 +124,28 @@ orders_count <- orders %>%
 
 orders2 <- orders %>% 
   left_join(orders_count, by = 'user_id') %>% 
-  mutate(abaixo_10 = if_else(compras <= 10, 'Menos de 10 pedidos', 'Mais de 10 pedidos'))
-  
+  mutate(abaixo_10 = if_else(compras <= 10, 'Menos de 10 pedidos', 'Mais de 10 pedidos'),
+         grupo = case_when(days_ma <= 8 ~ 'Recorrente',
+                           days_ma < 30 ~ 'Alvo',
+                           days_ma >= 30 ~ 'Indefinido',
+                           is.na(days_ma) ~ 'Indefinido'),
+         grupo = factor(grupo, levels = c('Recorrente', 'Alvo','Indefinido'), ordered = TRUE))
 
+orders2 %>% 
+  group_by(grupo) %>% 
+  skim()
+
+orders2 %>%  
+  na.omit() %>% 
+  filter(abaixo_10 == 'Menos de 10 pedidos') %>% 
+  ggplot(aes(x = days_ma)) +
+  geom_bar(fill = ic_cols('dark-green')) +
+  geom_vline(xintercept = 8, color = ic_cols('orange'), 
+             linetype = 'dashed', size = 0.8) +
+  scale_y_continuous(label = scales::label_number_si()) +
+  labs(title = 'Distribuição da média móvel de dias entre os últimos 5 pedidos',
+       x = 'Dias desde o último pedido', y = '')
+  
 
 
 ```
@@ -213,7 +161,7 @@ orders2 %>%
   summarise(n = n()) %>% 
   mutate(p = n/sum(n)) %>% 
   ggplot(aes(w_day, p)) +
-  geom_col(fill = ic_cols("light-blue")) +
+  geom_col(fill = ic_cols("green")) +
   scale_y_continuous(labels = scales::percent_format()) +
   scale_color_instacart() +
   labs(title = 'Frequência total de pedidos',
@@ -222,17 +170,16 @@ orders2 %>%
 
 
 orders2 %>% 
-  group_by(abaixo_10, w_day) %>% 
+  filter(grupo != 'Indefinido') %>% 
+  group_by(grupo, w_day) %>% 
   summarise(n = n()) %>% 
   mutate(p = n/sum(n)) %>% 
-  ggplot(aes(w_day, p, fill = abaixo_10)) +
-  geom_col( position = "dodge") +
+  ggplot(aes(w_day, p, fill = grupo)) +
+  geom_col(position = "dodge") +
   scale_y_continuous(labels = scales::percent_format()) +
-  scale_fill_instacart() +
+  scale_fill_instacart(reverse = TRUE) +
   labs(title = 'Frequência de pedidos por grupo de clientes' ,
-       x = 'Dia da semana') +
-  theme_minimal()
-
+       x = 'Dia da semana')
 
 
 ```
@@ -243,9 +190,14 @@ orders2 %>%
 ```{r}
 
 orders_grouped <- orders2 %>% 
-  group_by(w_day, order_hour_of_day, abaixo_10) %>% 
+  group_by(w_day, order_hour_of_day, grupo, abaixo_10) %>% 
   summarise(avg_compras = mean(compras, na.rm = T),
             avg_days = mean(days_since_prior_order, na.rm = T))
+
+## Insight
+orders_grouped %>% 
+  group_by(grupo) %>% 
+  skim()
 
 sc1 <- scale_fill_viridis_c()
 sc2 <- scale_fill_viridis_c()
@@ -253,7 +205,7 @@ sc2 <- scale_fill_viridis_c()
 avg_dias_total <- orders_grouped %>% 
   ggplot(aes(y = w_day, x = order_hour_of_day, fill = avg_days)) +
   geom_tile() +
-  scale_fill_paletteer_c("viridis::viridis")
+  scale_fill_instacart(discrete = FALSE, palette = 'cool')
 
 avg_dias_groups <- orders_grouped %>% 
   ggplot(aes(y = w_day, x = order_hour_of_day, fill = avg_days)) +

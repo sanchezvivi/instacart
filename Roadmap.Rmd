@@ -40,7 +40,7 @@ Aumentar a recorrência de pedidos de usuários frequentes
 
 grupos de clientes: 
 - Tudo
-- Clientes com menos de 10 pedidos
+- Clientes com menos de 10 pedidos e Média móvel de dias dos últimos 5 pedidos acima de 8 
 
 
 ## Base Instacart
@@ -58,8 +58,13 @@ Ordem das análises
 ### Pedidos (Vivi)
 
   - Estudo dos horários mais frequentes
+  - Média móvel de 5 pedidos
+  
+  grupos:
+    
   
   - Gráficos:
+    - histograma da média móvel
     - heatmap horários
     - gráficos da frequência de compra
     
