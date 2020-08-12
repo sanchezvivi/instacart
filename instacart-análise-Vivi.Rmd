@@ -18,7 +18,7 @@ output:
 
 - [Flexdashbaord](https://rmarkdown.rstudio.com/flexdashboard/using.html#overview)
 
-
+- https://drsimonj.svbtle.com/creating-corporate-colour-palettes-for-ggplot2
 
 
 
@@ -36,9 +36,8 @@ library(ggrepel)
 library(ggthemes)
 library(lubridate)
 library(grid)
-library(paletteer)
 library(plotly)
-library(paletti)
+library(RcppRoll)
 
 
 ```
@@ -49,35 +48,52 @@ library(paletti)
 
 font = 'opensans'
 
-instacart_colors <- c("blue" = "#007bff",  "indigo"= "#6610f2",
-                      "purple"= "#6f42c1", "pink"= "#e83e8c",
-                         "red"= "#dc3545","orange"= "#fd7e14",
-                       "yellow"= "#ffc107", "green"= "#28a745",
-                      "dark-green" = '#007C15', "teal" = "#20c997", 
-                      "cyan"= "#17a2b8","white" = "#fff", 
-                      "gray"= "#6c757d", "gray-dark"= "#343a40",
-                      "light-blue"= "#f8f9fa", "dark"= "#343a40")
+instacart_colors <- c("blue" = "#007bff", 
+                      "indigo"= "#6610f2",
+                      "purple"= "#6f42c1", 
+                      "pink"= "#e83e8c",
+                      "red"= "#dc3545",
+                      "orange"= "#fd7e14",
+                      "yellow"= "#ffc107", 
+                      "green"= "#34a31a",
+                      "dark-green" = "#0e491f", 
+                      "teal" = "#20c997", 
+                      "cyan"= "#17a2b8", 
+                      "white" = "#fff", 
+                      "gray"= "#6c757d", 
+                      "gray-dark"= "#343a40",
+                      "light-blue"= "#eff9ff", 
+                      "dark"= "#343a40")
 
 ic_cols <- function(...){
   cols <- c(...)
   if(is.null(cols))
     return (instacart_colors)
-  ic_colors[cols]
+  instacart_colors[cols]
 }
 
 instacart_palettes <- list(
-  `main`  = ic_cols("green", "orange", "blue"),
+  `main`  = ic_cols("green", "orange"),
 
-  `cool`  = ic_cols("blue", "indigo", 'cyan'),
+  `cool`  = ic_cols("blue", "cyan", "indigo"),
 
-  `hot`   = ic_cols("orange", "yellow", "red"),
+  `hot`   = ic_cols("yellow","orange","red"),
   
   `greens` = ic_cols("green", "dark-green"),
 
   `mixed` = ic_cols("green", "orange", "cyan", "yellow", "red"),
 
-  `contrast`  = ic_cols("light-blue", "dark-green")
+  `contrast`  = ic_cols("orange","light-blue","dark-green")
 )
+
+instacart_pal <- function(palette = "main", reverse = FALSE, ...) {
+  
+  pal <- instacart_palettes[[palette]]
+
+  if (reverse) pal <- rev(pal)
+
+  colorRampPalette(pal, ...)
+}
 
 scale_color_instacart <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) {
   pal <- instacart_pal(palette = palette, reverse = reverse)
@@ -90,6 +106,7 @@ scale_color_instacart <- function(palette = "main", discrete = TRUE, reverse = F
 }
 
 scale_fill_instacart <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) {
+  
   pal <- instacart_pal(palette = palette, reverse = reverse)
 
   if (discrete) {
@@ -99,10 +116,10 @@ scale_fill_instacart <- function(palette = "main", discrete = TRUE, reverse = FA
   }
 }
 
-
 ```
 
 
+# Arquivos
 
 ```{r}
 
@@ -131,11 +148,16 @@ products_raw <- read_csv(arquivos[6])
 
 orders <- orders_raw %>% 
   filter(eval_set != 'test') %>% 
+  filter(order_number != 1) %>% 
+  arrange(user_id, order_number) %>% 
   mutate(order_hour_of_day = as.numeric(order_hour_of_day),
-         w_day = wday(if_else(order_dow == 0, 7, order_dow), label = TRUE) #,
+         w_day = wday(if_else(order_dow == 0, 7, order_dow), label = TRUE)
          #days_since_prior_order = if_else(is.na(days_since_prior_order), 0,
                                           #days_since_prior_order)
          ) %>% 
+  group_by(user_id) %>% 
+  mutate(days_ma = roll_mean(days_since_prior_order, 5, fill = NA, na.rm = T)) %>% 
+  ungroup() %>% 
   glimpse
 
   
@@ -147,11 +169,26 @@ orders %>%
 ```
 
 
+```{r}
+
+orders %>% 
+  na.omit() %>% 
+  ggplot(aes(x = days_ma)) +
+  geom_bar(fill = ic_cols('dark-green')) +
+  geom_vline(xintercept = 8, color = ic_cols('orange'), 
+             linetype = 'dashed') +
+  theme_minimal()
+
+
+```
+
+
 ## Grupo de usuários que fizeram menos de 10 compras
 
 ```{r}
 
 orders_count <- orders %>% 
+  #filter(days_since_prior_order < 30) %>% 
   group_by(user_id) %>% 
   count() %>% 
   transmute(compras = n)
@@ -160,6 +197,9 @@ orders2 <- orders %>%
   left_join(orders_count, by = 'user_id') %>% 
   mutate(abaixo_10 = if_else(compras <= 10, 'Menos de 10 pedidos', 'Mais de 10 pedidos'))
   
+
+
+
 ```
 
 # Graficos
@@ -173,9 +213,13 @@ orders2 %>%
   summarise(n = n()) %>% 
   mutate(p = n/sum(n)) %>% 
   ggplot(aes(w_day, p)) +
-  geom_col() +
+  geom_col(fill = ic_cols("light-blue")) +
   scale_y_continuous(labels = scales::percent_format()) +
-  labs(colors = ic_theme('green'))
+  scale_color_instacart() +
+  labs(title = 'Frequência total de pedidos',
+       x = 'Dia da semana') + 
+  theme_minimal()
+
 
 orders2 %>% 
   group_by(abaixo_10, w_day) %>% 
@@ -184,7 +228,10 @@ orders2 %>%
   ggplot(aes(w_day, p, fill = abaixo_10)) +
   geom_col( position = "dodge") +
   scale_y_continuous(labels = scales::percent_format()) +
-  scale_color_manual(values = ic_theme("blue", "orange"))
+  scale_fill_instacart() +
+  labs(title = 'Frequência de pedidos por grupo de clientes' ,
+       x = 'Dia da semana') +
+  theme_minimal()
 
 
 
@@ -212,11 +259,12 @@ avg_dias_groups <- orders_grouped %>%
   ggplot(aes(y = w_day, x = order_hour_of_day, fill = avg_days)) +
   geom_tile() + 
   facet_wrap(~abaixo_10, nrow = 2) +
-  scale_fill_paletteer_c("viridis::viridis") +
+  scale_fill_viridis_c() +
+  #scale_fill_instacart(discrete = FALSE, palette = "greens") +
   labs(y = '', x = 'Horário', fill = 'Média de dias') +
   theme_minimal()
 
-ggplotly(groups)
+ggplotly(avg_dias_groups)
 
 ```
 
