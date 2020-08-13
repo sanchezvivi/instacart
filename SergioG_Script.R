@@ -14,7 +14,8 @@ for (i in biblios){
 
 # Importando os dados em .csv, usando o read.csv --------------------------
 
-path <- "data\\"
+#path <- "data\\"
+path <- "data/"
 file_aisles <- "aisles.csv"
 base_aisles <- read.csv(paste(path,file_aisles,sep = ""))
 
