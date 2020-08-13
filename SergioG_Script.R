@@ -5,7 +5,7 @@
 #              'inspectdf', 'skimr', 'naniar', 'visdat', 'tidymodels', 
 #              'klaR', 'corrplot', 'NetCluster', 'factoextra', 'maptree', 'treemap', 'DT','patchwork')
 
-biblios <- c('tidyverse', 'stringr', 'janitor', 'inspectdf', 'dplyr', 'skimr', 'plotly', 'RcppRoll', 'lubridate', 'factoextra')
+biblios <- c('tidyverse', 'stringr', 'janitor', 'inspectdf', 'dplyr', 'skimr', 'plotly', 'RcppRoll', 'lubridate', 'factoextra', 'forecats')
 
 for (i in biblios){
   if(!require(i, character.only = TRUE)){install.packages(paste0(i)); library(i, character.only = TRUE)}
@@ -169,6 +169,7 @@ base_orders_cl_mm <- base_orders_cl %>%
   ungroup() %>% 
   glimpse
 
+
            
 # filtrando somente os clientes que estão abaixo da mediana
 base_orders_cl_mm <- base_orders_cl_mm %>% arrange(user_id,-order_number)
@@ -190,6 +191,16 @@ base_ord_geral_prod_rec2 <- base_ord_geral_prod_rec2[,c(1:8,10,14)]
 base_ord_geral_prod_not_rec2 <- base_ord_geral_prod_not_rec %>% left_join(base_orders_cl_not_rec)
 base_ord_geral_prod_not_rec2 <- base_ord_geral_prod_not_rec2[,c(1:8,10,14)]
 
+# Gráfico da média móvel
+base_orders_cl_not_rec2 %>% 
+  na.omit() %>% 
+  ggplot(aes(x = days_ma)) +
+  geom_bar(fill = 'darkgreen') +
+  geom_vline(xintercept = 8, color = 'orange', 
+             linetype = 'dashed') +
+  theme_minimal()
+
+
 # HIPOTESE
 # Compras que tem recorrência, provavelmente é feita, repetindo uma cesta anterior.
 # Compras com menor recorrência tem maior variaçao na cesta de compras
@@ -197,13 +208,6 @@ base_ord_geral_prod_not_rec2 <- base_ord_geral_prod_not_rec2[,c(1:8,10,14)]
 
 # Rodando o modelo para os cem principais recorrentes e os 100 piores recorrentes
 
-base_orders_cl_not_rec %>% 
-  na.omit() %>% 
-  ggplot(aes(x = days_ma)) +
-  geom_bar(fill = 'darkgreen') +
-  geom_vline(xintercept = 8, color = 'orange', 
-             linetype = 'dashed') +
-  theme_minimal()
 
 
 # Histograma de Produtos comprados por Ordem ------------------------------
@@ -216,6 +220,11 @@ order_n_total %>% ggplot(aes(x = quant_prod)) +
 x4 <- function(x) x^4
 
 x_4<- function(x) sqrt(sqrt(x))
+
+x2 <- function(x) x^2
+
+x_2<- function(x) sqrt(x)
+
 
 order_n_total %>% ggplot() +
   geom_histogram(aes(x = quant_prod), bins = bin/10,) +
@@ -255,12 +264,38 @@ nao_rec_ord_cart %>% ggplot(aes(add_to_cart_order, nao_rec_perc)) +
 
 
 
+# Heatmaps Integradora Intermediária --------------------------------------
 # fazer uma análise pelos produtos que entram primeiro na cesta (por produto), nas compras feitas por clientes pouco recorrentes.
+
+# HIPÓTESE:
+# Existe uma relação entre a posição do produto no carrinho e a recorrência de compra
+
+# PREMISSA DA ANÁLISE:
+# Separar os clientes em 2 catergorias: Clientes muito recorrentes e clientes pouco recorrentes.
+# Essa definição inicial é feita com base na variável 'days_since_pior_order'. 
+# Primeiro se calcula o valor médio dessa variável, por user_id.
+# Uma vez definidas os valores médios por cliente, calculam-se os quartis.
+# São definidos como clientes pouco recorrentes, o que estão abaixo da madiana e Clientes recorrentes, aqueles que estão acima da mediana.
+# Definido isso, será feita uma análise para cada um dos grupos de modo a buscar as discrepâncias.
+
+# GRÁFICOS:
+# Foram criados 2 Heatmaps, um para cada grupo de clientes, onde são apresentados os percentuais de recorrencias de produtos (100 produtos de maior 
+# recorrência de compra), nas diferentes posições do carrinho de compras.
+
+# INSIGHT:
+# Comparando ambos os gráficos, não se percebem relevantes variações nem nos produtos apresentados, nem tampouco na proporção do produto nas diversas posições.
+
 prod_ord_cart <- base_ord_geral_prod_not_rec2 %>% dplyr::group_by(product_name, add_to_cart_order) %>% 
   summarise(quantidade = n(), 
             recorrencias = sum(reordered)) %>% 
   mutate(rec_perc = recorrencias/quantidade) %>% 
   arrange(-quantidade)
+
+# Definindo a média do número de produtos recorrentes
+a <- base_ord_geral_prod_not_rec2$order_id %>% n_distinct() #número de pedidos
+b <- base_ord_geral_prod_not_rec2$reordered %>% sum() #numero de produtos
+n_prod1 = b/a
+(texto1 <- paste("Média Produtos/Ordem = ", round(n_prod1,2), sep = ""))
 
 prod_ord_cart2 <- prod_ord_cart %>% dplyr::group_by(product_name) %>% mutate(perc = recorrencias/sum(recorrencias))
 
@@ -270,21 +305,40 @@ prod_ord_cart2_list <- prod_ord_cart2_list[1:100,1]
 
 prod_100_n_rec <- prod_ord_cart2 %>% right_join(prod_ord_cart2_list)
 
-hm1 <- prod_100_n_rec %>% ggplot() +
+prod_100_n_rec %>% ggplot() +
   geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
-  scale_fill_gradient2() +
-  ylim(0,150) +
+  scale_fill_gradient2(low = "white", high = "darkgreen", limits = c(0,40),trans = scales::trans_new(name = "quad",transform = x2, inverse = x_2))+
   theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) +
-  labs(title = "Heatmap de Produtos x Cart_Order para clientes Não-Recorrentes")
-ggplotly(hm1, tooltip = "perc")
+  labs(title = "Heatmap de Produtos x Cart_Order para clientes Não-Recorrentes") +
+  theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+  geom_hline(yintercept = n_prod1, color = "orange") +
+  scale_y_continuous(limits = c(0,20),expand = c(0,0)) +
+  geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ), size = 3, color = 'orange', hjust = 0, vjust = 0)
+  
 
-# fazer uma análise pelos produtos que entram primeiro na cesta (por produto), nas compras feitas por clientes pouco recorrentes.
+# hm1 <- prod_100_n_rec %>% ggplot() +
+#   geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
+#   scale_fill_gradient2() +
+#   ylim(0,150) +
+#   theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) +
+#   labs(title = "Heatmap de Produtos x Cart_Order para clientes Não-Recorrentes")
+# ggplotly(hm1, tooltip = "perc")
+
+# fazer uma análise pelos produtos que entram primeiro na cesta (por produto), nas compras feitas por clientes MAIS recorrentes.
 prod_ord_cart_rec <- base_ord_geral_prod_rec2 %>% dplyr::group_by(product_name, add_to_cart_order) %>% 
   summarise(quantidade = n(), 
             recorrencias = sum(reordered)) %>% 
   mutate(rec_perc = recorrencias/quantidade) %>% 
   arrange(-quantidade)
 
+# Definindo a média do número de produtos recorrentes
+a <- base_ord_geral_prod_rec2$order_id %>% n_distinct() #número de pedidos
+b <- base_ord_geral_prod_rec2$reordered %>% sum() #numero de produtos
+n_prod2 = b/a
+(texto2 <- paste("Média Produtos/Ordem = ", round(n_prod2,2), sep = ""))
+
+
+prod_ord_cart_rec2[prod_ord_cart_rec2$product_name == 'Banana']
 prod_ord_cart_rec2 <- prod_ord_cart_rec %>% dplyr::group_by(product_name) %>% mutate(perc = recorrencias/sum(recorrencias))
 
 prod_ord_cart_rec2_list <- prod_ord_cart_rec2 %>% group_by(product_name) %>% summarise(recorrencias_total = sum(recorrencias)) %>% arrange(-recorrencias_total)
@@ -293,14 +347,32 @@ prod_ord_cart_rec2_list <- prod_ord_cart_rec2_list[1:100,1]
 
 prod_100_rec <- prod_ord_cart_rec2 %>% right_join(prod_ord_cart_rec2_list)
 
-hm1 <- prod_100_rec %>% ggplot() +
+prod_100_rec %>% ggplot() +
   geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
-  scale_fill_gradient2()+
-  ylim(0,150)+
+  # scale_fill_gradient2(aes(fill = "darkgreen"))+
+  scale_fill_gradient2(low = "white", high = "darkgreen", limits = c(0,40), trans = scales::trans_new(name = "quad",transform = x2, inverse = x_2))+
   theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) +
-  labs(title = "Heatmap de Produtos x Cart_Order para clientes Recorrentes")
-ggplotly(hm1, tooltip = "perc")
+  labs(title = "Heatmap de Produtos x Cart_Order para clientes Recorrentes") +
+  theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+  geom_hline(yintercept = n_prod2, color = "orange") +
+  geom_text(aes(x = 5, y = n_prod2+0.1, label = texto2 ), size = 3, color = 'orange', hjust = 0, vjust = 0) +
+  scale_y_continuous(limits = c(0,20),expand = c(0,0))
 
+
+
+colors()
+# hm1 <- prod_100_rec %>% ggplot() +
+#   geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
+#   scale_fill_gradient2()+
+#   ylim(0,150)+
+#   theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) +
+#   labs(title = "Heatmap de Produtos x Cart_Order para clientes Recorrentes")
+# ggplotly(hm1, tooltip = "perc")
+
+
+
+
+# Análise de HClust -------------------------------------------------------
 
 # Montando um hclust de produto por order de carrinho para produtos de clientes pouco recorrentes
 mat_similarity <- prod_ord_cart2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>% pivot_wider(names_from = add_to_cart_order, values_from = perc)
@@ -337,8 +409,6 @@ p1 <- silho %>% ggplot(aes(x = k)) +
     sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
   )
 p1
-
-?dist(mat_similarity2, method = )
 
 cutted_not_rec <- hcut(mat_similarity2, hc_func = "hclust", hc_method = "complete", k=20, graph = TRUE)
 cutted_not_rec$labels <- mat_similarity2$product_name
