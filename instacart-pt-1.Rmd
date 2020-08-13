@@ -17,6 +17,8 @@ output:
 
 knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE)
 
+# Pacotes---------------------------------------------------
+
 library(flexdashboard)
 library(plotly)
 library(tidyverse)
@@ -30,8 +32,9 @@ library(grid)
 library(plotly)
 library(RcppRoll)
 library(extrafont)
+library(factoextra)
 
-# Identidade visual
+# Identidade visual---------------------------------------------------
 
 #font_import()
 #fonts()
@@ -44,23 +47,23 @@ source('instacart_palette.R')
 
 options(pillar.sigfig = 1)
 
-# Arquivos
+# Arquivos ---------------------------------------------------
 
 arquivos <- list.files(path = 'data/', 
                        pattern = "*.csv",
                        full.names = TRUE) %>% sort()
 
-#aisles_raw <- read_csv(arquivos[1])
+aisles_raw <- read_csv(arquivos[1])
 
-#departments_raw <- read_csv(arquivos[2])
+departments_raw <- read_csv(arquivos[2])
 
-#op_prior_raw <- read_csv(arquivos[3])
+op_prior_raw <- read_csv(arquivos[3])
 
-#op_train_raw <- read_csv(arquivos[4])
+op_train_raw <- read_csv(arquivos[4])
 
 orders_raw <- read_csv(arquivos[5])
 
-#products_raw <- read_csv(arquivos[6])
+products_raw <- read_csv(arquivos[6])
 
 # Pedidos --------------------------------------
 
@@ -80,8 +83,7 @@ orders <- orders_raw %>%
          ) %>% 
   group_by(user_id) %>% 
   mutate(days_ma = roll_mean(days_since_prior_order, 5, fill = NA, na.rm = T)) %>% 
-  ungroup() %>% 
-  glimpse
+  ungroup()
 
 ## Média Móvel
 
@@ -118,18 +120,6 @@ orders_grouped <- orders2 %>%
   summarise(avg_compras = mean(compras, na.rm = T),
             avg_days = mean(days_since_prior_order, na.rm = T))
 
-
-### Total
-hm_total <- orders2 %>% 
-  group_by(w_day,order_hour_of_day ) %>% 
-  summarise(avg_days = mean(days_since_prior_order, na.rm = T)) %>% 
-  ggplot(aes(y = w_day, x = order_hour_of_day, fill = avg_days)) +
-  geom_tile() +
-  #scale_fill_viridis_c() +
-  scale_fill_instacart(discrete = FALSE, palette = 'greens', reverse = TRUE) +
-  labs(title = 'Frequência de pedidos (Total)' ,
-       y = 'Dia da semana', x = 'Horário', fill = 'Dias desde a última compra')
-
 ### Grupos
 
 ### Value boxes
@@ -158,7 +148,19 @@ vb_alvo <- orders2 %>%
 
 vb_means_alvo <- orders_vb %>% 
   filter(grupo == 'Alvo', abaixo_10 == 'Menos de 10 pedidos')
+
+
 ### Heatmatps
+
+hm_total <- orders2 %>% 
+  group_by(w_day,order_hour_of_day ) %>% 
+  summarise(avg_days = mean(days_since_prior_order, na.rm = T)) %>% 
+  ggplot(aes(y = w_day, x = order_hour_of_day, fill = avg_days)) +
+  geom_tile() +
+  #scale_fill_viridis_c() +
+  scale_fill_instacart(discrete = FALSE, palette = 'greens', reverse = TRUE) +
+  labs(title = 'Frequência de pedidos (Total)' ,
+       y = 'Dia da semana', x = 'Horário', fill = 'Dias desde a última compra')
 
 hm_alvo <- orders_grouped %>% 
   filter(grupo == 'Alvo', abaixo_10 == 'Menos de 10 pedidos') %>% 
@@ -168,7 +170,6 @@ hm_alvo <- orders_grouped %>%
   scale_fill_instacart(discrete = FALSE, palette = 'greens', reverse = TRUE) +
   labs(title = 'Frequência de pedidos do grupo alvo' ,
        y = 'Dia da semana',x = 'Horário', fill = 'Dias desde a última compra')
-
 
 hm_recorrente <- orders_grouped %>% 
   filter(grupo == 'Recorrente', abaixo_10 == 'Mais de 10 pedidos') %>% 
@@ -182,19 +183,34 @@ hm_recorrente <- orders_grouped %>%
 
 # Produtos ---------------------------------------------------
 
+# Juntandos bases com infos por id
+
+base_products_names <- products_raw %>% 
+  left_join(aisles_raw) %>% 
+  left_join(departments_raw) %>% 
+  select(product_id, aisle_id, department_id, everything())
+
+# Juntandos bases com infos e base com todos os pedidos
+
+
+
+
 
 
 
 
 # Carrinho ---------------------------------------------------
 
+source('flex_files/flex_cart.R')
 
 
+# Pesquisa  ---------------------------------------------------
 
 
-
+#source('Pesquisa_Persona.Rmd')
 
 ```
+
 
 
 Pedidos
@@ -284,7 +300,7 @@ ggplotly(hist_ma)
 ```
 
 
-```{r}
+```{r freq}
 
 freq <- orders2 %>% 
   filter(grupo != 'Indefinido') %>% 
@@ -303,7 +319,7 @@ ggplotly(freq)
 ```
 
 
-### Frequência {.tabset}
+### Frequência
 
 ```{r heatmap}
 
@@ -323,11 +339,94 @@ ggplotly(hm_recorrente)
 ```
 
 
-Produtos
+Produtos 
 =========================================
+
+Row
+-----------------------------------------------------------------------
+
+### Análise 1
+
+```{r}
+```
+
+
+```{r}
+```
+
+
 
 Carrinho de Compras
 =========================================
 
+Row
+-----------------------------------------------------------------------
+### Heatmap
+
+```{r hm1}
+
+hm1
+
+#ggplotly(hm1, tooltip = "perc")
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Heatmap2
+
+
+```{r hm2}
+
+hm2
+
+#ggplotly(hm2, tooltip = "perc")
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Dendrogram
+
+```{r dend1}
+
+fviz_dend(cutted_not_rec, k = 20, 
+          cex = 0.7, 
+          type = "rectangle", 
+          #k_colors = c("darkgreen","orange"),
+          labels_track_height = 0.8,
+          # k_colors = c(1:4,6),
+          #ggtheme = theme_minmal(),
+          main = "Dendrograma de Produtos - Clientes Não Recorrentes",
+          ylab = '', xlab = '')
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Dendrogram2
+
+```{r dend2}
+
+fviz_dend(cutted_rec, k = 20, 
+          cex = 0.7, 
+          type = "rectangle", 
+          #k_colors = c("darkgreen","orange"),
+          labels_track_height = 0.8,
+          # k_colors = c(1:4,6),
+          #ggtheme = theme_light(),
+          main = "Dendrograma de Produtos - Clientes Recorrentes")
+
+
+
+```
+
+
+
+Pesquisa
+=========================================
 
  
