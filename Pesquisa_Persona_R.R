@@ -1,4 +1,4 @@
-#gráficos: comp_APP_FxAPP, freqAPP, freqF, freq_supermercado
+#gráficos:  freqAPP, freqF,comp_APP_FxAPP, freq_supermercado
 
 # bibliotecas -------------------------------------------------------------
 
@@ -38,7 +38,9 @@ data<- data[rowSums(is.na(data))<ncol(data),]
 
 
 # dados Instacart----------------------------------------------------------
-data_insta <- read.csv(file = 'orders.csv')
+path <- "data/"
+file <- 'orders.csv'
+data_insta <- read.csv(paste(path,file,sep = ""))
 
 # read_data ---------------------------------------------------------------
 
@@ -105,7 +107,7 @@ freq_palavras <- function(df,cols,q){
   x <- x %>% 
     filter(freq>= lim) %>% 
     ggplot(aes(x=reorder(word,freq),y=freq))+
-    geom_col()+
+    geom_col(fill= ic_cols('orange'))+
     labs(x="",title=deparse(substitute(df)))+
     coord_flip()
   
@@ -129,30 +131,35 @@ freqF
 
 ## Comparação
 
-data1 <- data_1APP
-data2 <- data_1F
 pergunta <-"Quais apps costuma usar?"
 n <- 9
-d1 <- palavras(data1,pergunta)
-colnames(d1)[2] <- "x1"
-d2 <- palavras(data2,pergunta)
-colnames(d2)[2] <- "x2"
+dAPP <- palavras(data_1APP,pergunta)
+colnames(dAPP)[2] <- "APP"
+dF <- palavras(data_1F,pergunta)
+colnames(dF)[2] <- "F"
 
-x <- join(d1, d2,by="word",type ="full")
+x <- join(dAPP, dF,by="word",type ="full")
 x[is.na(x)] <- 0
-x$soma <- x$x1+x$x2
+x$soma <- x$APP+x$F
 x <- x[order(x$soma,decreasing = TRUE),]
 x <- x[c(1:n),]
 x$soma <- NULL  
-x$x1<- round(x$x1/nrow(data1),3)
-x$x2<- round(x$x2/nrow(data2),3)  
+x$APP<- round(x$APP/sum(x$APP),3)
+x$F<- round(x$F/sum(x$F),3)  
 
-fig <- plot_ly(x, x = ~reorder(word,-x1), y = ~x1, type = 'bar',
-               name = "APP")
-fig <- fig %>% add_trace(y = ~x2, name = "FISICAMENTE",  type = 'bar') 
-fig <- fig %>% layout(xaxis =list(title = "") ,
-                      yaxis = list(title = "Frequência"))
+xP <- pivot_longer(data=x,
+                  cols=APP:F,
+                  names_to="Compra",
+                  values_to="Frequência")
+fig <- xP %>% 
+ggplot(aes(x=reorder(word,-Frequência),y=Frequência,fill=Compra)) + 
+  geom_bar(position="dodge", stat="identity")+
+  coord_flip()+
+  scale_fill_manual(values=c("#43b02a",
+                             "#ff8200"))
 comp_APP_FxAPP <- fig
+comp_APP_FxAPP
+
 
 # "Com que frequência você faz compras de mercado?" -----------------------
 
