@@ -194,18 +194,12 @@ base_products_names <- products_raw %>%
 
 
 
-
-
-
-
-
 # Carrinho ---------------------------------------------------
 
 source('flex_files/flex_cart.R')
 
 
 # Pesquisa  ---------------------------------------------------
-
 
 #source('Pesquisa_Persona.Rmd')
 
@@ -339,7 +333,7 @@ ggplotly(hm_recorrente)
 ```
 
 
-Produtos 
+Departamentos 
 =========================================
 
 Row
@@ -355,12 +349,9 @@ Row
 ```
 
 
-
-Carrinho de Compras
+Produtos e Carrinho de Compras {.storyboard}
 =========================================
 
-Row
------------------------------------------------------------------------
 ### Heatmap
 
 ```{r hm1}
@@ -371,8 +362,6 @@ hm1
 
 ```
 
-Row
------------------------------------------------------------------------
 
 ### Heatmap2
 
@@ -385,8 +374,7 @@ hm2
 
 ```
 
-Row
------------------------------------------------------------------------
+
 
 ### Dendrogram
 
@@ -404,8 +392,6 @@ fviz_dend(cutted_not_rec, k = 20,
 
 ```
 
-Row
------------------------------------------------------------------------
 
 ### Dendrogram2
 
@@ -420,13 +406,12 @@ fviz_dend(cutted_rec, k = 20,
           #ggtheme = theme_light(),
           main = "Dendrograma de Produtos - Clientes Recorrentes")
 
-
-
 ```
 
 
 
 Pesquisa
 =========================================
+
 
  
