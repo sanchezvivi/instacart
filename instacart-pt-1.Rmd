@@ -190,10 +190,10 @@ hm_recorrente <- orders_grouped %>%
 
 # Juntandos bases com infos por id
 
-base_products_names <- products_raw %>% 
-  left_join(aisles_raw) %>% 
-  left_join(departments_raw) %>% 
-  select(product_id, aisle_id, department_id, everything())
+#base_products_names <- products_raw %>% 
+#  left_join(aisles_raw) %>% 
+#  left_join(departments_raw) %>% 
+#  select(product_id, aisle_id, department_id, everything())
 
 # Juntandos bases com infos e base com todos os pedidos
 
@@ -374,15 +374,15 @@ HIPÓTESE:
 
 PREMISSA DA ANÁLISE:
 
-Separar os clientes em 2 catergorias: Clientes muito recorrentes e clientes pouco recorrentes.
+Separar os clientes em 2 categorias: Clientes muito recorrentes e clientes pouco recorrentes.
 
 Essa definição inicial é feita com base na variável 'days_since_pior_order'. 
 
-Primeiro se calcula o valor médio dessa variável, por user_id.
+Primeiro calcula-se o valor médio dessa variável, por user_id.
 
 Uma vez definidas os valores médios por cliente, calculam-se os quartis.
 
-São definidos como clientes pouco recorrentes, o que estão abaixo da madiana e Clientes recorrentes, aqueles que estão acima da mediana.
+São definidos como clientes pouco recorrentes, o que estão abaixo da mediana e clientes recorrentes, aqueles que estão acima da mediana.
 
 Definido isso, será feita uma análise para cada um dos grupos de modo a buscar as discrepâncias.
 
@@ -393,7 +393,7 @@ recorrência de compra), nas diferentes posições do carrinho de compras.
 
 INSIGHT:
 
-- Comparando ambos os gráficos, não se percebem relevantes variações nem nos produtos apresentados, nem tampouco na proporção do produto nas diversas posições.
+- Comparando ambos os gráficos, não se percebem variações relevantes nem nos produtos apresentados, nem tampouco na proporção do produto nas diversas posições.
 
 
 
@@ -410,7 +410,7 @@ hm_rec
 
 
 
-### Dendrograma Clientes Pouco Recorr
+### Dendrograma - Clientes Pouco Recorrentes
 
 ```{r dend1}
 
@@ -427,7 +427,7 @@ fviz_dend(cutted_not_rec, k = 20,
 ```
 
 
-### Dendrograma Clientes Muito Recorr
+### Dendrograma - Clientes Muito Recorrentes
 
 ```{r dend2}
 
