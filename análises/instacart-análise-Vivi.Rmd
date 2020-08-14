@@ -62,7 +62,7 @@ aisles_raw <- read_csv(arquivos[1])
 
 departments_raw <- read_csv(arquivos[2])
 
-#op_prior_raw <- read_csv(arquivos[3])
+op_prior_raw <- read_csv(arquivos[3])
 
 #op_train_raw <- read_csv(arquivos[4])
 
@@ -147,7 +147,6 @@ orders2 %>%
        x = 'Dias desde o último pedido', y = '')
   
 
-
 ```
 
 # Graficos
@@ -183,7 +182,6 @@ orders2 %>%
 
 
 ```
-
 
 ## Dias desde a última compra
  
@@ -221,41 +219,60 @@ ggplotly(avg_dias_groups)
 ```
 
 
-### Pedidos
-
-```{r avg_days}
-
-
-```
-
-
-```{r avg_days_10, echo = FALSE}
-
-orders_count <- orders %>% 
-  group_by(user_id) %>% 
-  count() %>% 
-  transmute(compras = n)
-
-orders_count_10 <- orders_count %>% 
-              filter(compras <= 10)
-
-avg_days_10 <- orders %>% 
-  semi_join(orders_count_10, by = 'user_id') %>% 
-  group_by(order_dow, order_hour_of_day) %>% 
-  summarise(avg_days = mean(days_since_prior_order, na.rm = T)) %>% 
-  pivot_wider(names_from = order_hour_of_day, values_from = avg_days) %>% 
-  ungroup()
-
-
-d3heatmap(avg_days_10, scale = 'column')
-
-```
-
-***
-comentários
-Premissas
-
 ### Produtos
+
+Todos os clientes dos grupos alvo e recorrente estão na base prior, portanto não é necessário juntar a base train
+
+```{r}
+
+orders2 %>% 
+  group_by (eval_set, grupo) %>% 
+  count()
+
+```
+
+
+```{r}
+
+base_products_names <- products_raw %>% 
+  left_join(aisles_raw) %>% 
+  left_join(departments_raw) %>% 
+  select(product_id, aisle_id, department_id, everything())
+
+orders_full <- orders2 %>% 
+  filter(grupo != 'Indefinido') %>% 
+  left_join(op_prior_raw, by = 'order_id') %>% 
+  left_join(base_products_names, by = 'product_id')
+
+```
+
+top produtos
+
+```{r}
+
+library(tidytext)
+
+orders_full %>% 
+  group_by(grupo, product_name) %>%
+  summarise(qtd = n()) %>% 
+  top_n(20, qtd) %>% 
+  ungroup() %>% 
+  #mutate(department = reorder_within(department, desc(qtd), grupo)) %>% 
+  ggplot(aes(x = reorder(product_name, desc(qtd)), y = qtd)) +
+  geom_col() +
+  facet_wrap(~grupo, scales = 'free', nrow = 2) +
+  theme(axis.text.x = element_text(size = 8, angle = 30,
+                                   vjust =  1, hjust = 1))
+  
+  
+  
+
+?reorder_within
+
+
+```
+
+
 
 ### 
  
