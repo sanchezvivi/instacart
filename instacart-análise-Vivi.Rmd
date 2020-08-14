@@ -246,7 +246,6 @@ orders_full <- orders2 %>%
 
 ```
 
-
 top produtos
 
 ```{r}

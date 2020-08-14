@@ -43,7 +43,10 @@ setwd("C:/Users/leona/OneDrive/Insper/AI/Project_Pesquisa/Pesquisa/")
 ```
 
 ```{r,include=TRUE}
-data <- read_excel("C:/Users/leona/OneDrive/Insper/AI/Project_Pesquisa/Pesquisa/Pesquisa de Compras Online(2).xlsx")
+#data <- read_excel("C:/Users/leona/OneDrive/Insper/AI/Project_Pesquisa/Pesquisa/Pesquisa de Compras Online(2).xlsx")
+
+data <- read_excel("Pesquisa de Compras Online(2).xlsx")
+
 data <- mutate_if(data, is.character, tolower)
 data<- data[,colSums(is.na(data))<nrow(data)]
 data<- data[rowSums(is.na(data))<ncol(data),]
@@ -179,8 +182,6 @@ text1(df,data)
 freq_palavras(df,"Quais apps costuma usar?",10)
 wc_palavras(df,"Quais apps costuma usar?",8)
 ```
-
-
 
 ## Grupo faz compra de supermecado por app
 
