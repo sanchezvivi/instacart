@@ -14,6 +14,7 @@ output:
 ---
 
 ```{r setup, include=FALSE, fig.align = 'center'}
+
 knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE)
 
 # Pacotes---------------------------------------------------
@@ -55,10 +56,11 @@ theme_update(text = element_text(family = "Brandon Text"),
 source('instacart_palette.R')
 
 options(pillar.sigfig = 1)
-```
 
+#```
+#
+#```{r Importa, include=FALSE, fig.align = 'center', cache=TRUE}
 
-```{r Importa, include=FALSE, fig.align = 'center', cache=TRUE}
 # Arquivos ---------------------------------------------------
 
 arquivos <- list.files(path = 'data/', 
@@ -78,8 +80,8 @@ orders_raw <- read_csv(arquivos[5])
 products_raw <- read_csv(arquivos[6])
 
 #```
-
-#```{r Tratamentos, include=FALSE, fig.align = 'center', cache=TRUE}
+#
+#```{r Tratamentos, include=FALSE}
 
 # Pedidos --------------------------------------
 
@@ -217,7 +219,7 @@ source('flex_files/flex_cart.R')
 
 # Pesquisa  ---------------------------------------------------
 
-source('flex_files/Pesquisa_Persona.R')
+source('flex_files/Pesquisa_Persona_R.R')
 
 ```
 
