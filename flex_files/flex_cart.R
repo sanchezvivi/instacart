@@ -51,28 +51,28 @@ base_products <- products_raw
 
 #sum(!(base_orders$order_id %in% base_ord_prior$order_id))
 
-base_orders_rec <- base_orders %>% filter(!is.na(days_since_prior_order))
-
-
-# Incluindo o produto na base de pedidos anteriores
-#base_ord_prior %>% left_join(products_raw)
-base_ord_prior_prod <- base_ord_prior %>% left_join(base_products)
-# base_ord_prior_prod <- base_ord_prior_prod[,1:5]
-
-#rm(base_ord_)
-
-base_orders_rec_count <- base_orders_rec %>% group_by(user_id) %>% count() %>% transmute(compras = n)
-
-base_orders_rec_count_10 <- base_orders_rec_count %>% filter(compras <= 10)
-base_orders_rec_count_10 %>% nrow()
-
-base_orders_rec_count_10_complete <- base_orders_rec_count_10 %>% left_join(base_orders_rec)
-
-base_orders_rec_count_10_complete_prod <- base_orders_rec_count_10_complete %>% left_join(base_ord_prior_prod)
-
-base_orders_rec_count_10_complete_prod_dept <- base_orders_rec_count_10_complete_prod %>% left_join(base_dept)
-
-base_graf1 <- base_orders_rec_count_10_complete_prod_dept %>% group_by(department) %>% count() %>% transmute(quantidade = n) %>% arrange(desc(quantidade))
+# base_orders_rec <- base_orders %>% filter(!is.na(days_since_prior_order))
+# 
+# 
+# # Incluindo o produto na base de pedidos anteriores
+# #base_ord_prior %>% left_join(products_raw)
+# base_ord_prior_prod <- base_ord_prior %>% left_join(base_products)
+# # base_ord_prior_prod <- base_ord_prior_prod[,1:5]
+# 
+# #rm(base_ord_)
+# 
+# base_orders_rec_count <- base_orders_rec %>% group_by(user_id) %>% count() %>% transmute(compras = n)
+# 
+# base_orders_rec_count_10 <- base_orders_rec_count %>% filter(compras <= 10)
+# base_orders_rec_count_10 %>% nrow()
+# 
+# base_orders_rec_count_10_complete <- base_orders_rec_count_10 %>% left_join(base_orders_rec)
+# 
+# base_orders_rec_count_10_complete_prod <- base_orders_rec_count_10_complete %>% left_join(base_ord_prior_prod)
+# 
+# base_orders_rec_count_10_complete_prod_dept <- base_orders_rec_count_10_complete_prod %>% left_join(base_dept)
+# 
+# base_graf1 <- base_orders_rec_count_10_complete_prod_dept %>% group_by(department) %>% count() %>% transmute(quantidade = n) %>% arrange(desc(quantidade))
 
 ##base_graf1[1:10,] %>% ggplot(aes(x = reorder(department, -quantidade), y = quantidade)) +
 # #                     geom_col(na.rm = TRUE)
@@ -100,7 +100,7 @@ base_graf1 <- base_orders_rec_count_10_complete_prod_dept %>% group_by(departmen
 
 #orders_raw %>% group_by(user_id) %>% summarise(n_pedidos = max(order_number))
 #
-n_vezes_mais30 <- orders_raw %>% dplyr::filter(days_since_prior_order == 30) %>% group_by(user_id) %>% summarise(n_30 = n())
+# n_vezes_mais30 <- orders_raw %>% dplyr::filter(days_since_prior_order == 30) %>% group_by(user_id) %>% summarise(n_30 = n())
 #
 #max(n_vezes_mais30$n_30)
 #
@@ -123,9 +123,9 @@ n_vezes_mais30 <- orders_raw %>% dplyr::filter(days_since_prior_order == 30) %>%
 ##sum(base_ord_train$order_id %in% base_orders$order_id)
 ## há interseção total entre os 'order_id' da tabela 'order_train' na tabela 'orders'
 #
-orders_in_ord_train <- sum(base_orders$order_id %in% base_ord_train$order_id)
-#
-orders_in_ord_prior <- sum(base_orders$order_id %in% base_ord_prior$order_id)
+# orders_in_ord_train <- sum(base_orders$order_id %in% base_ord_train$order_id)
+# #
+# orders_in_ord_prior <- sum(base_orders$order_id %in% base_ord_prior$order_id)
 
 # Ao se buscar os order_id da tabela 'orders' na tabela 'order_prior', encontram-se 3214874 (93,4%).
 # Ao se buscar os order_id da tabela 'orders' na tabela 'order_train', encontram-se 131209 (3,84%).
@@ -222,9 +222,21 @@ bin <- order_n_total$quant_prod %>% max()
 #order_n_total %>% ggplot(aes(x = quant_prod)) +
 #                    geom_histogram(bins = bin/10) +
 #                    scale_y_sqrt()
+# x4 <- function(x) x^4
+# 
+# x_4<- function(x) sqrt(sqrt(x))
+
+
+# Funções de Transformação ------------------------------------------------
+
+
 x4 <- function(x) x^4
 
 x_4<- function(x) sqrt(sqrt(x))
+
+x2 <- function(x) x^2
+
+x_2<- function(x) sqrt(x)
 
 #order_n_total %>% ggplot() +
 #  geom_histogram(aes(x = quant_prod), bins = bin/10,) +
@@ -271,82 +283,129 @@ prod_ord_cart <- base_ord_geral_prod_not_rec2 %>% dplyr::group_by(product_name, 
   mutate(rec_perc = recorrencias/quantidade) %>% 
   arrange(-quantidade)
 
+# Definindo a média do número de produtos recorrentes
+a <- base_ord_geral_prod_not_rec2$order_id %>% n_distinct() #número de pedidos
+b <- base_ord_geral_prod_not_rec2$reordered %>% sum() #numero de produtos
+n_prod1 = b/a
+(texto1 <- paste("Media Produtos/Ordem = ", round(n_prod1,2), sep = ""))
+
 prod_ord_cart2 <- prod_ord_cart %>% dplyr::group_by(product_name) %>% mutate(perc = recorrencias/sum(recorrencias))
 
 prod_ord_cart2_list <- prod_ord_cart2 %>% group_by(product_name) %>% summarise(recorrencias_total = sum(recorrencias)) %>% arrange(-recorrencias_total)
 
-prod_ord_cart2_list <- prod_ord_cart2_list[1:100,1]
+prod_ord_cart2_list <- prod_ord_cart2_list[1:50,1]
 
 prod_100_n_rec <- prod_ord_cart2 %>% right_join(prod_ord_cart2_list)
 
-hm1 <- prod_100_n_rec %>% ggplot() +
-  geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
-  scale_fill_gradient2() +
-  ylim(0,150) +
-  theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) +
-  labs(title = "Heatmap de Produtos x Cart Order para clientes Não-Recorrentes",
-       x = 'Produto', y = 'Ordem colocado no carrinho')
-#ggplotly(hm1, tooltip = "perc")
+# prod_100_n_rec %>% ggplot() +
+#   geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
+#   scale_fill_gradient2(low = "white", high = ic_cols("green"), limits = c(0,40),trans = scales::trans_new(name = "quad",transform = x2, inverse = x_2))+
+#   theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) +
+#   labs(title = "Heatmap de Produtos x Cart_Order para clientes Não-Recorrentes", fill = "%", x = "Produto", y="Ordem_Cart") +
+#   theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+#   geom_hline(yintercept = n_prod1, color = "orange") +
+#   scale_y_continuous(limits = c(0,20),expand = c(0,0)) +
+#   geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ), size = 3, color = 'orange', hjust = 0, vjust = 0)
 
-# fazer uma análise pelos produtos que entram primeiro na cesta (por produto), nas compras feitas por clientes pouco recorrentes.
+
+hm_n_rec <- prod_100_n_rec %>% ggplot() +
+  geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
+  scale_fill_gradient2(low = "white", high = ic_cols("green"), limits = c(0,40),trans = scales::trans_new(name = "quad",transform = x2, inverse = x_2))+
+  theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) +
+  labs(title = "Heatmap de Produtos x Cart_Order para clientes Pouco Recorrentes", size.title = 2, fill = "%", x = "Produto", y="Ordem_Cart") +
+  theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+  geom_hline(yintercept = n_prod1, color = "orange") +
+  scale_y_continuous(limits = c(0,20),expand = c(0,0)) +
+  geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ), size = 3, color = 'orange', hjust = 0, vjust = 0)
+# ggplotly(hm_n_rec, tooltip = "perc")
+
+# fazer uma análise pelos produtos que entram primeiro na cesta (por produto), nas compras feitas por clientes muito recorrentes.
 prod_ord_cart_rec <- base_ord_geral_prod_rec2 %>% dplyr::group_by(product_name, add_to_cart_order) %>% 
   summarise(quantidade = n(), 
             recorrencias = sum(reordered)) %>% 
   mutate(rec_perc = recorrencias/quantidade) %>% 
   arrange(-quantidade)
 
+# Definindo a média do número de produtos recorrentes
+a <- base_ord_geral_prod_rec2$order_id %>% n_distinct() #número de pedidos
+b <- base_ord_geral_prod_rec2$reordered %>% sum() #numero de produtos
+n_prod2 = b/a
+(texto2 <- paste("Média Produtos/Ordem = ", round(n_prod2,2), sep = ""))
+
+
+
 prod_ord_cart_rec2 <- prod_ord_cart_rec %>% dplyr::group_by(product_name) %>% mutate(perc = recorrencias/sum(recorrencias))
 
 prod_ord_cart_rec2_list <- prod_ord_cart_rec2 %>% group_by(product_name) %>% summarise(recorrencias_total = sum(recorrencias)) %>% arrange(-recorrencias_total)
 
-prod_ord_cart_rec2_list <- prod_ord_cart_rec2_list[1:100,1]
+prod_ord_cart_rec2_list <- prod_ord_cart_rec2_list[1:50,1]
 
 prod_100_rec <- prod_ord_cart_rec2 %>% right_join(prod_ord_cart_rec2_list)
 
-hm2 <- prod_100_rec %>% ggplot() +
+# prod_100_rec %>% ggplot() +
+#   geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
+#   scale_fill_gradient2(low = "white", high = ic_cols("green"), limits = c(0,40), trans = scales::trans_new(name = "quad",transform = x2, inverse = x_2))+
+#   theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) +
+#   labs(title = "Heatmap de Produtos x Cart_Order para clientes Recorrentes") +
+#   theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+#   geom_hline(yintercept = n_prod2, color = "orange") +
+#   geom_text(aes(x = 5, y = n_prod2+0.1, label = texto2 ), size = 3, color = 'orange', hjust = 0, vjust = 0) +
+#   scale_y_continuous(limits = c(0,20),expand = c(0,0))
+
+
+
+hm_rec <- prod_100_rec %>% ggplot() +
   geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
-  scale_fill_gradient2()+
-  ylim(0,150)+
+  scale_fill_gradient2(low = "white", high = ic_cols("green"), limits = c(0,40), trans = scales::trans_new(name = "quad",transform = x2, inverse = x_2))+
   theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) +
-  labs(title = "Heatmap de Produtos x Cart Order para clientes Recorrentes",
-       x = 'Produto', y = 'Ordem colocado no carrinho')
-#ggplotly(hm1, tooltip = "perc")
+  labs(title = "Heatmap de Produtos x Cart_Order para clientes Recorrentes", fill = "%", x = "Produto", y="Ordem_Cart") +
+  theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+  geom_hline(yintercept = n_prod2, color = "orange") +
+  geom_text(aes(x = 5, y = n_prod2+0.1, label = texto2 ), size = 3, color = 'orange', hjust = 0, vjust = 0) +
+  scale_y_continuous(limits = c(0,20),expand = c(0,0))
+
+
+
+
+
+
+
 
 
 # Montando um hclust de produto por order de carrinho para produtos de clientes pouco recorrentes
-mat_similarity <- prod_ord_cart2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>% 
+mat_similarity <- prod_ord_cart2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>%
   pivot_wider(names_from = add_to_cart_order, values_from = perc)
 
 mat_similarity2 <- mat_similarity[1:200,]
 
 # Montando um hclust de produto por order de carrinho para produtos de clientes MAIS recorrentes
-mat_similarity_rec <- prod_ord_cart_rec2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>% 
+mat_similarity_rec <- prod_ord_cart_rec2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>%
   pivot_wider(names_from = add_to_cart_order, values_from = perc)
 
 mat_similarity_rec2 <- mat_similarity_rec[1:200,]
 
 # vet_clust <- c(1:((nrow(mat_similarity2)-2)/20))
-vet_clust <- c(1:9)
-vet_clust <- vet_clust * 20
-vet_clust2 <- c(c(2:10),vet_clust)
-silho <- tibble(k = numeric(), silho_avg = numeric(), negatives = numeric(), singulares = numeric())
-
-for (i in vet_clust2){
-  cutted <- hcut(mat_similarity2, hc_func = "hclust", hc_method = "complete", k=i, graph = TRUE)
-  negativos <- sum(cutted$silinfo$widths$sil_width < 0) / length(cutted$silinfo$widths$sil_width)
-  sing <- nrow(as_tibble(cutted$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
-  silho <- silho %>% bind_rows(c(k = i, silho_avg = cutted$silinfo$avg.width, negatives = negativos, singulares = sing))
-  print(i)
-}
-
-best_k <- silho$k[silho$silho_avg == max(silho$silho_avg)]
-best_k_neg <- silho$k[silho$negatives == min(silho$negatives)]
+# vet_clust <- c(1:9)
+# vet_clust <- vet_clust * 20
+# vet_clust2 <- c(c(2:10),vet_clust)
+# silho <- tibble(k = numeric(), silho_avg = numeric(), negatives = numeric(), singulares = numeric())
+# 
+# for (i in vet_clust2){
+#   cutted <- hcut(mat_similarity2, hc_func = "hclust", hc_method = "complete", k=i, graph = TRUE)
+#   negativos <- sum(cutted$silinfo$widths$sil_width < 0) / length(cutted$silinfo$widths$sil_width)
+#   sing <- nrow(as_tibble(cutted$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
+#   silho <- silho %>% bind_rows(c(k = i, silho_avg = cutted$silinfo$avg.width, negatives = negativos, singulares = sing))
+#   print(i)
+# }
+# 
+# best_k <- silho$k[silho$silho_avg == max(silho$silho_avg)]
+# best_k_neg <- silho$k[silho$negatives == min(silho$negatives)]
 
 #p1 <- silho %>% ggplot(aes(x = k)) +
 #  geom_line(aes(y = silho_avg), color = "blue") +
 #  # geom_rect(aes(xmin = 35, xmax = 53, ymin = 0.33, ymax = 0.35), alpha = 1/500, color = "red", fill = "green") +
 #  # geom_vline(xintercept = c(35, 53), show.legend = TRUE) +
-#  geom_line(aes(y = singulares/40), color = "red") + 
+#  geom_line(aes(y = singulares/40), color = "red") +
 #  scale_y_continuous(
 #    name = "Avg_Silh",
 #    sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
@@ -373,9 +432,9 @@ cutted_rec$labels <- mat_similarity_rec2$product_name
 #          ggtheme = theme_light(),
 #          main = "Dendrograma de Produtos - Clientes Não Recorrentes")
 #
-#fviz_dend(cutted_rec, k = 20, 
-#          cex = 0.7, 
-#          type = "rectangle", 
+# fviz_dend(cutted_rec, k = 20,
+#          cex = 0.7,
+#          type = "rectangle",
 #          k_colors = c("darkgreen","orange"),
 #          labels_track_height = 0.8,
 #          # k_colors = c(1:4,6),

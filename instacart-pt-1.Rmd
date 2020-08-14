@@ -14,7 +14,6 @@ output:
 ---
 
 ```{r setup, include=FALSE, fig.align = 'center'}
-
 knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE)
 
 # Pacotes---------------------------------------------------
@@ -46,7 +45,10 @@ theme_update(text = element_text(family = "Brandon Text"),
 source('instacart_palette.R')
 
 options(pillar.sigfig = 1)
+```
 
+
+```{r Importa, include=FALSE, fig.align = 'center', cache=TRUE}
 # Arquivos ---------------------------------------------------
 
 arquivos <- list.files(path = 'data/', 
@@ -64,7 +66,10 @@ op_train_raw <- read_csv(arquivos[4])
 orders_raw <- read_csv(arquivos[5])
 
 products_raw <- read_csv(arquivos[6])
+```
 
+
+```{r Tratamentos, include=FALSE, fig.align = 'center'}
 # Pedidos --------------------------------------
 
 orders <- orders_raw %>% 
@@ -274,7 +279,6 @@ valueBox(round(vb_means_alvo$avg_compras, 1), icon = "fa-carrot",
 ### Média de dias entre compras -box}
 
 ```{r}
-?round
 
 valueBox(round(vb_means_alvo$avg_days, 1), icon = "ion-today-outline",
          color = ic_cols("orange"))
@@ -352,23 +356,53 @@ Row
 Produtos e Carrinho de Compras {.storyboard}
 =========================================
 
-### Heatmap
+### Heatmap - Consumidores pouco recorrentes
 
 ```{r hm1}
 
-hm1
+hm_n_rec
 
 #ggplotly(hm1, tooltip = "perc")
 
 ```
 
+***
 
-### Heatmap2
+HIPÓTESE:
+
+- Existe uma relação entre a posição do produto no carrinho e a recorrência de compra
+
+PREMISSA DA ANÁLISE:
+
+Separar os clientes em 2 catergorias: Clientes muito recorrentes e clientes pouco recorrentes.
+
+Essa definição inicial é feita com base na variável 'days_since_pior_order'. 
+
+Primeiro se calcula o valor médio dessa variável, por user_id.
+
+Uma vez definidas os valores médios por cliente, calculam-se os quartis.
+
+São definidos como clientes pouco recorrentes, o que estão abaixo da madiana e Clientes recorrentes, aqueles que estão acima da mediana.
+
+Definido isso, será feita uma análise para cada um dos grupos de modo a buscar as discrepâncias.
+
+GRÁFICOS:
+
+Foram criados 2 Heatmaps, um para cada grupo de clientes, onde são apresentados os percentuais de recorrencias de produtos (100 produtos de maior 
+recorrência de compra), nas diferentes posições do carrinho de compras.
+
+INSIGHT:
+
+- Comparando ambos os gráficos, não se percebem relevantes variações nem nos produtos apresentados, nem tampouco na proporção do produto nas diversas posições.
+
+
+
+### Heatmap - Consumidores muito recorrentes
 
 
 ```{r hm2}
 
-hm2
+hm_rec
 
 #ggplotly(hm2, tooltip = "perc")
 
@@ -376,30 +410,30 @@ hm2
 
 
 
-### Dendrogram
+### Dendrograma Clientes Pouco Recorr
 
 ```{r dend1}
 
-fviz_dend(cutted_not_rec, k = 20, 
-          cex = 0.7, 
-          type = "rectangle", 
+fviz_dend(cutted_not_rec, k = 20,
+          cex = 0.7,
+          type = "rectangle",
           #k_colors = c("darkgreen","orange"),
           labels_track_height = 0.8,
           # k_colors = c(1:4,6),
           #ggtheme = theme_minmal(),
-          main = "Dendrograma de Produtos - Clientes Não Recorrentes",
+          main = "Dendrograma de Produtos - Clientes Pouco Recorrentes",
           ylab = '', xlab = '')
 
 ```
 
 
-### Dendrogram2
+### Dendrograma Clientes Muito Recorr
 
 ```{r dend2}
 
-fviz_dend(cutted_rec, k = 20, 
-          cex = 0.7, 
-          type = "rectangle", 
+fviz_dend(cutted_rec, k = 20,
+          cex = 0.5,
+          type = "rectangle",
           #k_colors = c("darkgreen","orange"),
           labels_track_height = 0.8,
           # k_colors = c(1:4,6),

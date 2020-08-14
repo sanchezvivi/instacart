@@ -1,8 +1,8 @@
 
 # Bibliotecas -------------------------------------------------------------
 
-# biblios <- c('tidyverse','dplyr', 'ggplot2', 'lubridate', 'stringr', 
-#              'inspectdf', 'skimr', 'naniar', 'visdat', 'tidymodels', 
+# biblios <- c('tidyverse','dplyr', 'ggplot2', 'lubridate', 'stringr',
+#              'inspectdf', 'skimr', 'naniar', 'visdat', 'tidymodels',
 #              'klaR', 'corrplot', 'NetCluster', 'factoextra', 'maptree', 'treemap', 'DT','patchwork')
 
 # biblios <- c('tidyverse', 'stringr', 'janitor', 'inspectdf', 'dplyr', 'skimr', 'plotly', 'RcppRoll', 'lubridate', 'factoextra', 'forecats')
@@ -10,11 +10,11 @@
 # for (i in biblios){
 #   if(!require(i, character.only = TRUE)){install.packages(paste0(i)); library(i, character.only = TRUE)}
 # }
-# 
-# 
+
+#
 # # Importando os dados em .csv, usando o read.csv --------------------------
-# 
-# #path <- "data\\"
+#
+#path <- "data\\"
 # path <- "data/"
 # file_aisles <- "aisles.csv"
 # base_aisles <- read.csv(paste(path,file_aisles,sep = ""))
@@ -40,14 +40,24 @@
 #   geom_histogram(bins = 20)
 
 
+# Importando bases do arquivo Principal -----------------------------------
+# 
+base_aisles <- departments_raw
+base_dept <- departments_raw
+base_ord_prior <- op_prior_raw
+base_ord_train <- op_train_raw
+base_orders <- orders_raw
+base_products <- products_raw
+
+
 # Paletas -----------------------------------------------------------------
 
-
-theme_set(theme_minimal())
-theme_update(text = element_text(family = "Brandon Text"),
-             plot.title = element_text(face = "bold"))
-
-source('instacart_palette.R')
+# 
+# theme_set(theme_minimal())
+# theme_update(text = element_text(family = "Brandon Text"),
+#              plot.title = element_text(face = "bold"))
+# 
+# source('instacart_palette.R')
 
 # Iniciando Pré-Análises --------------------------------------------------
 # 
@@ -202,13 +212,13 @@ base_ord_geral_prod_not_rec2 <- base_ord_geral_prod_not_rec %>% left_join(base_o
 base_ord_geral_prod_not_rec2 <- base_ord_geral_prod_not_rec2[,c(1:8,10,14)]
 
 # Gráfico da média móvel
-base_orders_cl_not_rec2 %>% 
-  na.omit() %>% 
-  ggplot(aes(x = days_ma)) +
-  geom_bar(fill = 'darkgreen') +
-  geom_vline(xintercept = 8, color = 'orange', 
-             linetype = 'dashed') +
-  theme_minimal()
+# base_orders_cl_not_rec2 %>% 
+#   na.omit() %>% 
+#   ggplot(aes(x = days_ma)) +
+#   geom_bar(fill = 'darkgreen') +
+#   geom_vline(xintercept = 8, color = 'orange', 
+#              linetype = 'dashed') +
+#   theme_minimal()
 
 
 
@@ -334,7 +344,14 @@ hm_n_rec <- prod_100_n_rec %>% ggplot() +
   geom_hline(yintercept = n_prod1, color = "orange") +
   scale_y_continuous(limits = c(0,20),expand = c(0,0)) +
   geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ), size = 3, color = 'orange', hjust = 0, vjust = 0)
-ggplotly(hm_n_rec, tooltip = "perc")
+# ggplotly(hm_n_rec, tooltip = "perc")
+
+
+
+
+
+
+
 
 # fazer uma análise pelos produtos que entram primeiro na cesta (por produto), nas compras feitas por clientes MAIS recorrentes.
 prod_ord_cart_rec <- base_ord_geral_prod_rec2 %>% dplyr::group_by(product_name, add_to_cart_order) %>% 
@@ -380,7 +397,7 @@ hm_rec <- prod_100_rec %>% ggplot() +
   geom_hline(yintercept = n_prod2, color = "orange") +
   geom_text(aes(x = 5, y = n_prod2+0.1, label = texto2 ), size = 3, color = 'orange', hjust = 0, vjust = 0) +
   scale_y_continuous(limits = c(0,20),expand = c(0,0))
-ggplotly(hm_rec, tooltip = "perc")
+# ggplotly(hm_rec, tooltip = "perc")
 
 
 
