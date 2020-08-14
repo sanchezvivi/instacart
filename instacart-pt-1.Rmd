@@ -32,6 +32,16 @@ library(plotly)
 library(RcppRoll)
 library(extrafont)
 library(factoextra)
+library(plyr)
+library(Hmisc)
+library(ggpubr)
+library(readxl)
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
+library(syuzhet)
+library(textshape)
+library(tm)
 
 # Identidade visual---------------------------------------------------
 
@@ -66,10 +76,11 @@ op_train_raw <- read_csv(arquivos[4])
 orders_raw <- read_csv(arquivos[5])
 
 products_raw <- read_csv(arquivos[6])
-```
 
+#```
 
-```{r Tratamentos, include=FALSE, fig.align = 'center'}
+#```{r Tratamentos, include=FALSE, fig.align = 'center', cache=TRUE}
+
 # Pedidos --------------------------------------
 
 orders <- orders_raw %>% 
@@ -206,7 +217,7 @@ source('flex_files/flex_cart.R')
 
 # Pesquisa  ---------------------------------------------------
 
-#source('Pesquisa_Persona.Rmd')
+source('flex_files/Pesquisa_Persona.R')
 
 ```
 
@@ -444,8 +455,49 @@ fviz_dend(cutted_rec, k = 20,
 
 
 
-Pesquisa
+Pesquisa {.storyboard}
 =========================================
 
+### Distribuição
+
+```{r picture, echo = F, fig.cap = "Title", out.width = '100%'}
+
+knitr::include_graphics("img/Distribuição pesquisa.png")
+
+```
+
+### Insights 
+
+```{r comp_APP_FxAPP}
+
+comp_APP_FxAPP
+
+```
+
+```{r 1 APP}
+
+freqAPP +
+  labs(y = 'Frequência')
+
+```
+
+
+```{r 1F}
+
+freqF +
+  labs(y = 'Frequência')
+
+
+```
+
+### Instacart vs Pesquisa
+
+```{r instacart_vs_pesquisa}
+
+freq_supermercado +
+  scale_fill_instacart() +
+  labs(fill = "Fonte", x = "Número de compras no mês", y = "Frequência")
+
+```
 
  

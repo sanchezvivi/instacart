@@ -2,22 +2,22 @@
 
 # bibliotecas -------------------------------------------------------------
 
-library(tidyverse)
-library(plyr)
-library(lubridate)
-library(Hmisc)
-library(skimr)
-library(ggplot2)
-library(ggpubr)
-library(plotly)
-library(readxl)
-library(SnowballC)
-library(wordcloud)
-library(RColorBrewer)
-library(syuzhet)
-library(textshape)
-library(tm)
-library(extrafont)
+#library(tidyverse)
+#library(plyr)
+#library(lubridate)
+#library(Hmisc)
+#library(skimr)
+#library(ggplot2)
+#library(ggpubr)
+#library(plotly)
+#library(readxl)
+#library(SnowballC)
+#library(wordcloud)
+#library(RColorBrewer)
+#library(syuzhet)
+#library(textshape)
+#library(tm)
+#library(extrafont)
 
 # visualização gráfica ----------------------------------------------------
 
@@ -38,7 +38,8 @@ data<- data[rowSums(is.na(data))<ncol(data),]
 
 
 # dados Instacart----------------------------------------------------------
-data_insta <- read.csv(file = 'orders.csv')
+#data_insta <- read.csv(file = 'orders.csv')
+data_insta <- orders_raw
 
 # read_data ---------------------------------------------------------------
 
@@ -105,8 +106,8 @@ freq_palavras <- function(df,cols,q){
   x <- x %>% 
     filter(freq>= lim) %>% 
     ggplot(aes(x=reorder(word,freq),y=freq))+
-    geom_col()+
-    labs(x="",title=deparse(substitute(df)))+
+    geom_col(fill = ic_cols("dark-green"))+
+    labs(x="", title=deparse(substitute(df)))+
     coord_flip()
   
   return(x)
@@ -119,7 +120,7 @@ freq_palavras <- function(df,cols,q){
 
 col="Quais apps costuma usar?"
 freqAPP <- freq_palavras(data_1APP,col,6)
-freqAPP 
+freqAPP
 
 ## Compra de supermecado fisicamente
 
@@ -201,13 +202,12 @@ freq <- freq%>% pivot_longer(
   values_to = "freq")
 
 ## gráfico
-freq_supermecado <- freq %>% 
+freq_supermercado <- freq %>% 
   ggplot(aes(x=as.factor(freq_mes), y=freq, fill=x)) +
   geom_bar(stat="identity",position=position_dodge())+
-  labs(x=" ",title ="Compras de supermcado por mês ")+
-  theme_minimal()
+  labs(x=" ",title ="Compras de supermcado por mês ")
 
-freq_supermecado
+#freq_supermecado
 
 
 
