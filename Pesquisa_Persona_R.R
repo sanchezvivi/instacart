@@ -37,6 +37,9 @@ data<- data[,colSums(is.na(data))<nrow(data)]
 data<- data[rowSums(is.na(data))<ncol(data),]
 
 
+# dados Instacart----------------------------------------------------------
+data_insta <- read.csv(file = 'orders.csv')
+
 # read_data ---------------------------------------------------------------
 
 read_data <- function(data,column,filter){
@@ -109,40 +112,6 @@ freq_palavras <- function(df,cols,q){
   return(x)
 }
 
-## Wordcloud: wc_palavras (df,cols,q)
-
-wc_palavras <- function(df,cols,q){
-  x <- palavras(df,cols)
-  wordcloud(words = x$word, freq = x$freq, min.freq = 1,           max.words=q, random.order=FALSE, rot.per=0,
-            colors=brewer.pal(1, "Dark2"))
-}
-
-## Função graphs(data1,c1,data2,c2,pergunta,n,nt,vt)
-
-graphs<- function (data1,c1,data2,c2,pergunta,n,nt,vt){
-  d1 <- palavras(data1,pergunta)
-  colnames(d1)[2] <- "x1"
-  d2 <- palavras(data2,pergunta)
-  colnames(d2)[2] <- "x2"
-  
-  x <- join(d1, d2,by="word",type ="full")
-  x[is.na(x)] <- 0
-  x$soma <- x$x1+x$x2
-  x <- x[order(x$soma,decreasing = TRUE),]
-  x <- x[c(1:n),]
-  x$soma <- NULL
-  
-  x$x1<- round(x$x1/nrow(data1),3)
-  x$x2<- round(x$x2/nrow(data2),3)
-  
-  fig <- plot_ly(x, x = ~reorder(word,-x1), y = ~x1, type = 'bar',
-                 name = c1)
-  fig <- fig %>% add_trace(y = ~x2, name = c2,  type = 'bar') 
-  fig <- fig %>% layout(xaxis =list(title = "") ,
-                        yaxis = list(title = "Frequência"))
-  freq_app_FAPP <- fig
-  
-}
 
 # "Quais apps costuma usar?" ----------------------------------------------
 
@@ -152,13 +121,13 @@ col="Quais apps costuma usar?"
 freqAPP <- freq_palavras(data_1APP,col,6)
 freqAPP 
 
-### Compra de supermecado fisicamente
+## Compra de supermecado fisicamente
 
 col="Quais apps costuma usar?"
 freqF <- freq_palavras(data_1F,col,8)
 freqF
 
-### Comparação
+## Comparação
 
 data1 <- data_1APP
 data2 <- data_1F
@@ -196,10 +165,6 @@ colnames(freq_pes) <- c("freq_mes","Pesquisa")
 freq_pes$Pesquisa <- round(freq_pes$Pesquisa /sum(freq_pes$Pesquisa),3)
 
 ## INSTACART
-
-#data_insta <- read.csv(file = "data/orders.csv")
-setwd("C:/Users/leona/Documents/GitHub/instacart/data")
-data_insta <- read.csv(file = 'orders.csv')
 
 mean_interval <- data_insta%>% 
   filter(!is.na(days_since_prior_order)) %>% 
