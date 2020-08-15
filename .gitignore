@@ -15,3 +15,7 @@ output/yelp.csv/_SUCCESS
 *.ttf
 img/Open_Sans/LICENSE.txt
 instacart-pt-1.html
+*.RData
+*.rdx
+*.rdb
+instacart-pt-1_cache/html/__packages
