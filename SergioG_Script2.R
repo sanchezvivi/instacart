@@ -9,6 +9,7 @@ biblios <- c('tidyverse', 'stringr', 'janitor', 'inspectdf', 'dplyr', 'skimr',
              'plotly', 'RcppRoll', 'lubridate', 'factoextra', 'forecats', 'tidymodels')
 
 library(tidymodels)
+library(tidyverse)
 
 for (i in biblios){
   if(!require(i, character.only = TRUE)){install.packages(paste0(i)); library(i, character.only = TRUE)}
@@ -94,6 +95,22 @@ base_orders_cl_not_rec <- base_orders_cl_mm %>% right_join(users_churn)
 
 base_ord_geral_prod_rec <- base_ord_geral_prod %>% dplyr::filter(order_id %in% base_orders_cl_rec$order_id)
 base_ord_geral_prod_not_rec <- base_ord_geral_prod %>% dplyr::filter(order_id %in% base_orders_cl_not_rec$order_id)
+
+# Média de compras
+base_orders_cl_rec %>% group_by(user_id) %>% summarise(media_compras = mean(n())) %>% skim()
+
+base_orders_cl_not_rec %>% group_by(user_id) %>% summarise(media_compras = mean(n())) %>% skim()
+
+
+# Dias entre Compras - Média
+
+base_orders_cl_rec %>% group_by(user_id) %>% summarise(media_compras = mean(days_since_prior_order)) %>% skim()
+
+base_orders_cl_not_rec %>% group_by(user_id) %>% summarise(media_compras = mean(days_since_prior_order)) %>% skim()
+
+
+base_ord_geral_prod_not_rec
+
 
 # Trazendo a coluna user_id
 base_ord_geral_prod_rec2 <- base_ord_geral_prod_rec %>% left_join(base_orders_cl_rec)
