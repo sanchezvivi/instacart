@@ -1,8 +1,8 @@
 ---
 title: "Instacart - parte 1"
-author: "Leonardo Giovanelli, Marcelo Franceschini, Rafael Costa, Sérgio Gomes, Viviane Sanchez"
-date: '`r Sys.Date()`'
-institute: "PADS - Insper"
+#author: "Leonardo Giovanelli, Marcelo Franceschini, Rafael Costa, Sérgio Gomes, Viviane Sanchez"
+#date: '`r Sys.Date()`'
+#institute: "PADS - Insper"
 encoding: "UTF-8"
 output: 
  flexdashboard::flex_dashboard:
@@ -221,19 +221,39 @@ base_products_names <- products_raw %>%
 
 ```
 
+Intro 
+=========================================
+Row
+-----------------------------------------------------------------------
+
+```{r out.width = "87%", fig.align = "center"}
+
+include_graphics("img/ppt/Slide1.png")
+
+```
+
+
 Mercado 
 =========================================
+Row
+-----------------------------------------------------------------------
+
+```{r out.width = "87%", fig.align = "center"}
+
+include_graphics("img/ppt/Slide2.png")
+
+```
 
 Row
 -----------------------------------------------------------------------
 
-### Total de  pessoas
+### De pessoas
 
 ```{r}
 
-n_pessoas <- 2000000
+n_pessoas <- 2
 
-valueBox(value = formatC(n_pessoas,  big.mark = " ", format = "f", flag = '#', digits = 0), 
+valueBox(value = formatC(paste(n_pessoas, " Milhões"), format = 's'),
          icon = "fa-user",
          color = ic_cols("orange"))
 
@@ -241,50 +261,43 @@ valueBox(value = formatC(n_pessoas,  big.mark = " ", format = "f", flag = '#', d
 
 ```
 
-### Ticket médio anual
+###  Gastos em supermercado por ano por pessoa
 
 ```{r}
 
 ticket <- 5000
 
-valueBox(value = formatC(ticket, big.mark = " ", format = "g"), 
+valueBox(value = formatC(paste("R$ ", ticket), format = 's'), 
          icon = "fa-shopping-cart",
          color = ic_cols("orange"))
 
 ```
 
-### Potencial
+### De potencial
 
 ```{r}
 
-n_pessoas <- 2000000
-ticket <- 5000
+n_pessoas <- 2
+ticket <- 5
 
 potencial <- n_pessoas*ticket
 
-valueBox(value = formatC(potencial, big.mark = " ", format = "f", flag = '#', digits = 0), 
+valueBox(value = formatC(paste(potencial, " Bilhões"), format = 's'),
+        #value = formatC(potencial, big.mark = " ", format = "f", flag = '#', digits = 0), 
          icon = "fa-money",
          color = ic_cols("green"))
 
 ```
 
-Row
------------------------------------------------------------------------
-
-```{r}
-
-include_graphics("img/intro.png")
-
-```
 
 Persona 
 =========================================
 
 ### Persona
 
-```{r out.width = "100%"}
+```{r}
 
-include_graphics("img/persona.png")
+include_graphics("img/ppt/Slide3.png")
 
 ```
 
@@ -296,7 +309,7 @@ Pesquisa
 
 ```{r}
 
-include_graphics("img/pesquisa.png")
+include_graphics("img/ppt/Slide4.png")
 
 ```
 
@@ -411,26 +424,27 @@ valueBox(value = round(churn_mean_ticket, 1),
 
 
 
-<!-- Row -->
-<!-- ----------------------------------------------------------------------- -->
-<!-- ### Distribuição -->
+Row
+-----------------------------------------------------------------------
 
+### Distribuição
 
+```{r avg_days, out.width = "100%"}
 
-<!-- ```{r avg_days} -->
+#ggplotly(hist_ma)
 
-<!-- ggplotly(hist_ma) -->
+hist_ma
 
-<!-- ``` -->
+```
 
 
 <!-- ```{r freq} -->
 
-<!-- freq <- orders2 %>%  -->
-<!--   filter(grupo != 'Indefinido') %>%  -->
-<!--   group_by(grupo, w_day) %>%  -->
-<!--   summarise(n = n()) %>%  -->
-<!--   mutate(p = n/sum(n)) %>%  -->
+<!-- freq <- orders2 %>% -->
+<!--   filter(grupo != 'Indefinido') %>% -->
+<!--   group_by(grupo, w_day) %>% -->
+<!--   summarise(n = n()) %>% -->
+<!--   mutate(p = n/sum(n)) %>% -->
 <!--   ggplot(aes(w_day, p, fill = grupo)) + -->
 <!--   geom_col(position = "dodge") + -->
 <!--   scale_y_continuous(labels = scales::percent_format()) + -->
@@ -443,16 +457,16 @@ valueBox(value = round(churn_mean_ticket, 1),
 <!-- ``` -->
 
 
-Row
------------------------------------------------------------------------
+<!-- Row -->
+<!-- ----------------------------------------------------------------------- -->
 
-### Frequência
+<!-- ### Frequência -->
 
-```{r heatmap}
+<!-- ```{r heatmap} -->
 
-ggplotly(hm_total)
+<!-- ggplotly(hm_total) -->
 
-```
+<!-- ``` -->
 
 <!-- ```{r Grupos} -->
 
@@ -579,28 +593,77 @@ include_graphics("img/Heat_Recorr.png")
 
 - **INSIGHTS:**
         
-  **Recorrentes**: Cesta mais dispersa, porém com maior quantidade de Hortifruti (Bananas, leites e Soda) como principais itens do inicio do carrinho
+  **Recorrentes**: 
+  
+  - Cesta mais dispersa, porém com maior quantidade de Hortifruti (Bananas, leites e Soda) como principais itens do inicio do carrinho
     
-        - Muito mais orgânicos
+  - Muito mais orgânicos
         
-### Dendro Clientes Churn
+<!-- ### Dendro Clientes Churn -->
 
-```{r dend_Churn}
+<!-- ```{r dend_Churn} -->
 
-# library(imager)
-# myimg <- load.image("tanglegrama1.png")
-# plot(myimg)
-include_graphics("img/Dend_Churn.png")
-```
+<!-- # library(imager) -->
+<!-- # myimg <- load.image("tanglegrama1.png") -->
+<!-- # plot(myimg) -->
+<!-- include_graphics("img/Dend_Churn.png") -->
+<!-- ``` -->
 
-### Dendro Clientes Recorrentes
+<!-- ### Dendro Clientes Recorrentes -->
 
-```{r dend_Rec}
+<!-- ```{r dend_Rec} -->
 
-# library(imager)
-# myimg <- load.image("tanglegrama1.png")
-# plot(myimg)
-include_graphics("img/Dend_Recorr.png")
+<!-- # library(imager) -->
+<!-- # myimg <- load.image("tanglegrama1.png") -->
+<!-- # plot(myimg) -->
+<!-- include_graphics("img/Dend_Recorr.png") -->
 
-```
+<!-- ``` -->
+
+
  
+Corredores
+=======================================================================
+
+### Churn
+
+```{r}
+
+include_graphics("img/Churn_Aisle.png")
+
+```
+
+### Recorrentes
+
+```{r}
+
+include_graphics("img/Recorr_Aisle.png")
+
+```
+
+
+Próximos Passos
+=======================================================================
+
+### Possibilidades
+
+```{r}
+
+include_graphics("img/ppt/Slide5.png")
+
+```
+
+
+Perguntas
+=======================================================================
+
+### Perguntas
+
+```{r}
+
+include_graphics("img/ppt/Slide6.png")
+
+```
+
+
+
