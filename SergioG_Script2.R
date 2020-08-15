@@ -84,8 +84,16 @@ base_orders_cl_mm <- base_orders_cl %>%
 # filtrando somente os clientes que estão abaixo da mediana
 base_orders_cl_mm <- base_orders_cl_mm %>% arrange(user_id,-order_number)
 
-users_churn <- base_orders_cl_mm %>% dplyr::group_by(user_id) %>% summarise(ult_ordem = first(order_number), days_ma_new = nth(days_ma,3), media_days = mean(days_since_prior_order)) %>% filter(days_ma_new == 30 | (is.na(days_ma_new) & media_days >= 25)) %>% glimpse()
-users_rec <- base_orders_cl_mm %>% dplyr::group_by(user_id) %>% summarise(ult_ordem = first(order_number), days_ma_new = nth(days_ma,3), media_days = mean(days_since_prior_order)) %>% filter(days_ma_new < 8) %>% glimpse()
+users_churn <- base_orders_cl_mm %>% 
+  dplyr::group_by(user_id) %>% 
+  summarise(ult_ordem = first(order_number), days_ma_new = nth(days_ma,3), 
+            media_days = mean(days_since_prior_order)) %>% 
+  filter(days_ma_new == 30 | (is.na(days_ma_new) & media_days >= 25)) %>% glimpse()
+
+users_rec <- base_orders_cl_mm %>% dplyr::group_by(user_id) %>% 
+  summarise(ult_ordem = first(order_number), days_ma_new = nth(days_ma,3), 
+            media_days = mean(days_since_prior_order)) %>% 
+  filter(days_ma_new < 8) %>% glimpse()
 
 nrow(users_churn)
 nrow(users_rec)
