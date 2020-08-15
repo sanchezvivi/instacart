@@ -15,6 +15,13 @@ for (i in biblios){
   if(!require(i, character.only = TRUE)){install.packages(paste0(i)); library(i, character.only = TRUE)}
 }
 
+
+theme_set(theme_minimal())
+theme_update(text = element_text(family = "Brandon Text"),
+             plot.title = element_text(face = "bold"))
+
+source('instacart_palette.R')
+
 # Importando os dados em .csv, usando o read.csv --------------------------
 
 #path <- "data\\"
@@ -53,6 +60,10 @@ base_products <- read.csv(paste(path,file_products,sep = "")) %>% glimpse()
 # Removendo os registros da tabela `orders` que estão categorizados como 'test', uma vez que essas 'order_id' não possuem dados correspondentes nas bases de product_order
 base_orders_cl <- base_orders %>% filter(eval_set != 'test')
 
+base_orders_cl %>% group_by(user_id) %>% summarise(cnt = n())
+
+
+
 # Mesclando as bases 'order_prior' e 'order_train'
 base_ord_geral <- dplyr::union(base_ord_prior,base_ord_train)
 
@@ -76,7 +87,7 @@ base_orders_cl_mm <- base_orders_cl %>%
   ungroup() %>% 
   glimpse
 
-
+base_orders_cl_mm %>% group_by(user_id)
 
 
 # Código de 2020-08-15
@@ -104,7 +115,34 @@ base_orders_cl_not_rec <- base_orders_cl_mm %>% right_join(users_churn)
 base_ord_geral_prod_rec <- base_ord_geral_prod %>% dplyr::filter(order_id %in% base_orders_cl_rec$order_id)
 base_ord_geral_prod_not_rec <- base_ord_geral_prod %>% dplyr::filter(order_id %in% base_orders_cl_not_rec$order_id)
 
-base_ord_geral_prod_rec
+# Gráficos de Departamento e corredor
+base_ord_geral_prod_rec %>% 
+  group_by(aisle) %>% 
+  summarise(rec = sum(reordered)/sum(base_ord_geral_prod_rec$reordered)) %>% 
+  arrange(-rec) %>% 
+  top_n(20) %>% 
+  ggplot(aes(reorder(aisle, -rec), rec*100)) +
+  theme_minimal() +
+  geom_col(fill = "darkgreen")+
+  labs(x = "Corredor", y = "Quantidade(%)", title = "Perfil Compra Recorr - Corredores")+
+  scale_y_continuous(expand = c(0,0), limits = c(0,15)) +
+  theme(axis.text.x = element_text(angle = 90, color = "darkorange", size = 12))
+
+base_ord_geral_prod_not_rec %>% 
+  group_by(aisle) %>% 
+  summarise(rec = sum(reordered)/sum(base_ord_geral_prod_not_rec$reordered)) %>% 
+  arrange(-rec) %>% 
+  top_n(20) %>% 
+  ggplot(aes(reorder(aisle, -rec), rec*100)) +
+  theme_minimal() +
+  geom_col(fill = "darkgreen")+
+  labs(x = "Corredor", y = "Quantidade(%)", title = "Perfil Compra Churn - Corredores")+
+  scale_y_continuous(expand = c(0,0), limits = c(0,15)) +
+  theme(axis.text.x = element_text(angle = 90, color = "darkorange", size = 12))
+
+
+
+
 
 
 
