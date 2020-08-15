@@ -232,7 +232,8 @@ Row
 
 ```{r}
 
-valueBox(value = prettyNum(vb_recorrente, big.mark = " "), 
+recorr_n <- 33758
+valueBox(value = prettyNum(recorr_n, big.mark = " "), 
          icon = "fa-users",
          color = ic_cols("green"))
 
@@ -243,7 +244,9 @@ valueBox(value = prettyNum(vb_recorrente, big.mark = " "),
 
 ```{r}
 
-valueBox(value = round(vb_means_recorrente$avg_compras, 1), 
+recorr_mean_compra <- 33758
+
+valueBox(value = round(, 1), 
          icon = "fa-carrot",
          color = ic_cols("green"))
 
@@ -254,12 +257,26 @@ valueBox(value = round(vb_means_recorrente$avg_compras, 1),
 
 ```{r}
 
-valueBox(value = round(vb_means_recorrente$avg_days, 1), 
+recorr_mean_days <- 33758
+
+valueBox(value = round(, 1), 
          icon = "ion-today-outline",
          color = ic_cols("green"))
 
 ```
 
+
+### Ticket Médio {.value-box}
+
+```{r}
+
+recorr_mean_ticket <- 33758
+
+valueBox(value = round(, 1), 
+         icon = "ion-today-outline",
+         color = ic_cols("green"))
+
+```
 
 Row
 -----------------------------------------------------------------------
@@ -268,7 +285,8 @@ Row
 
 ```{r}
 
-valueBox(value = prettyNum(vb_alvo, big.mark = ' '), 
+churn_n <- 15248
+valueBox(value = prettyNum(churn_n, big.mark = ' '), 
          icon = "ion-people-outline",
          color = ic_cols("orange"))
 
@@ -279,7 +297,9 @@ valueBox(value = prettyNum(vb_alvo, big.mark = ' '),
 
 ```{r}
 
-valueBox(round(vb_means_alvo$avg_compras, 1), icon = "fa-carrot",
+churn_mean_compra <- 33758
+
+valueBox(round(, 1), icon = "fa-carrot",
          color = ic_cols("orange"))
 
 ```
@@ -290,11 +310,25 @@ valueBox(round(vb_means_alvo$avg_compras, 1), icon = "fa-carrot",
 
 ```{r}
 
-valueBox(round(vb_means_alvo$avg_days, 1), icon = "ion-today-outline",
+churn_mean_days <- 33758
+
+valueBox(round(, 1), icon = "ion-today-outline",
          color = ic_cols("orange"))
 
 ```
 
+
+### Ticket Médio {.value-box}
+
+```{r}
+
+churn_mean_ticket <- 33758
+
+valueBox(value = round(, 1), 
+         icon = "ion-today-outline",
+         color = ic_cols("green"))
+
+```
 
 Row
 -----------------------------------------------------------------------
@@ -430,6 +464,8 @@ Foram criados 2 Heatmaps, um para cada grupo de clientes, onde são apresentados
         - Atenção para o alto percentual desses produtos na primeira posição da cesta.
         - Há vários produtos que nunca apareceram em lugares mais altos da cesta. Sugere que não fazem compras, e sim pedem produtos avulsos.
     + Recorrentes: Cesta mais dispersa, porém com maior quantidade de Hortifruti (Bananas, leites e Soda) como principais itens do inicio do carrinho
+        - Muito mais orgânicos
+    
 
 
 ### Heatmap - Consumidores Recorrentes
