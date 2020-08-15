@@ -268,9 +268,12 @@ prod_100_rec %>% ggplot() +
 
 sum(prod_ord_cart_rec2_list$product_name %in% prod_ord_cart2_list$product_name)
 
-prod_ord_cart_rec2_list$product_name[!(prod_ord_cart_rec2_list$product_name %in% prod_ord_cart2_list$product_name)]
+view(prod_ord_cart_rec2_list$product_name[!(prod_ord_cart_rec2_list$product_name %in% prod_ord_cart2_list$product_name)])
 
-prod_ord_cart2_list$product_name[!(prod_ord_cart2_list$product_name %in% prod_ord_cart_rec2_list$product_name)]
+view(prod_ord_cart2_list$product_name[!(prod_ord_cart2_list$product_name %in% prod_ord_cart_rec2_list$product_name)])
+
+ggplot()+
+  geom_la
 
 # hm1 <- prod_100_rec %>% ggplot() +
 #   geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
