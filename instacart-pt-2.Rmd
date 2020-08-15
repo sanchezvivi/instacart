@@ -231,9 +231,9 @@ Row
 
 ```{r}
 
-n_pessoas <- 2
+n_pessoas <- 2000000
 
-valueBox(value = prettyNum(n_pessoas,big.mark = " "), 
+valueBox(value = prettyNum(n_pessoas, big.mark = " ", format = "f"), 
          icon = "fa-user",
          color = ic_cols("orange"))
 
@@ -247,9 +247,11 @@ valueBox(value = prettyNum(n_pessoas,big.mark = " "),
 
 ticket <- 5000
 
-valueBox(value = prettyNum(ticket, big.mark = " "), 
+valueBox(value = prettyNum(ticket, big.mark = " ", format = "f"), 
          icon = "fa-shopping-cart",
          color = ic_cols("orange"))
+
+?prettyNum()
 
 ```
 
@@ -257,12 +259,12 @@ valueBox(value = prettyNum(ticket, big.mark = " "),
 
 ```{r}
 
-n_pessoas <- 2
-ticket <- 5
+n_pessoas <- 2000000
+ticket <- 5000
 
 potencial <- n_pessoas*ticket
 
-valueBox(value = prettyNum(potencial, big.mark = " "), 
+valueBox(value = prettyNum(potencial, big.mark = " ", format = "f"), 
          icon = "fa-money",
          color = ic_cols("green"))
 
@@ -429,32 +431,15 @@ ggplotly(hm_total)
 <!-- ``` -->
 
 
-Departamentos 
-=========================================
-
-Row
------------------------------------------------------------------------
-
-### Análise 1
-
-```{r}
-```
-
-
-```{r}
-```
-
 
 Produtos e Carrinho de Compras {.storyboard}
 =========================================
 
-### Heatmap - Consumidores Churn
+### Heatmap - Consumidores Churn {data-commentary-width=400}
 
 ```{r heat_churn}
 
 include_graphics("img/Heat_Churn.png")
-
-
 
 #ggplotly(hm1, tooltip = "perc")
 
@@ -528,7 +513,7 @@ Foram criados 2 Heatmaps, um para cada grupo de clientes, onde são apresentados
     
 
 
-### Heatmap - Consumidores Recorrentes
+### Heatmap - Consumidores Recorrentes {data-commentary-width=400}
 
 
 ```{r heat_recorr}
