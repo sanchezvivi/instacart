@@ -221,6 +221,54 @@ base_products_names <- products_raw %>%
 ```
 
 
+Persona
+=========================================
+
+Row
+-----------------------------------------------------------------------
+
+### Total de  pessoas (MILHÕES)
+
+```{r}
+
+n_pessoas <- 2
+
+valueBox(value = prettyNum(n_pessoas,big.mark = " "), 
+         icon = "fa-user",
+         color = ic_cols("orange"))
+
+?prettyNum
+
+```
+
+### Ticket médio anual
+
+```{r}
+
+ticket <- 5000
+
+valueBox(value = prettyNum(ticket, big.mark = " "), 
+         icon = "fa-shopping-cart",
+         color = ic_cols("orange"))
+
+```
+
+### Potencial (BILHÕES)
+
+```{r}
+
+n_pessoas <- 2
+ticket <- 5
+
+potencial <- n_pessoas*ticket
+
+valueBox(value = prettyNum(potencial, big.mark = " "), 
+         icon = "fa-money",
+         color = ic_cols("green"))
+
+```
+
+
 
 Pedidos
 =======================================================================

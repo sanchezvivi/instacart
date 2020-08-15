@@ -221,6 +221,49 @@ base_products_names <- products_raw %>%
 ```
 
 
+Persona
+=========================================
+
+Row
+-----------------------------------------------------------------------
+
+### Total de  pessoas
+
+```{r}
+
+recorr_mean_compra <- 35.9
+
+valueBox(value = round(recorr_mean_compra, 1), 
+         icon = "fa-user",
+         color = ic_cols("orange"))
+
+
+```
+
+### Ticket médio anual
+
+```{r}
+
+recorr_mean_compra <- 35.9
+
+valueBox(value = round(recorr_mean_compra, 1), 
+         icon = "fa-shopping-cart",
+         color = ic_cols("orange"))
+
+```
+
+### Potencial
+
+```{r}
+
+recorr_mean_compra <- 35.9
+
+valueBox(value = round(recorr_mean_compra, 1), 
+         icon = "fa-money",
+         color = ic_cols("green"))
+
+```
+
 
 Pedidos
 =======================================================================
@@ -306,7 +349,7 @@ valueBox(round(churn_mean_compra, 1), icon = "fa-carrot",
 
 
 
-### Média de dias entre compras -box}
+### Média de dias entre compras {.value-box}
 
 ```{r}
 
@@ -576,9 +619,6 @@ include_graphics("img/Dend_Recorr.png")
 
 ```
 
-
-Pesquisa
-=========================================
 
 
  

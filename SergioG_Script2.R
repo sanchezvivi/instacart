@@ -6,7 +6,7 @@
 #              'klaR', 'corrplot', 'NetCluster', 'factoextra', 'maptree', 'treemap', 'DT','patchwork')
 
 biblios <- c('tidyverse', 'stringr', 'janitor', 'inspectdf', 'dplyr', 'skimr', 
-             'plotly', 'RcppRoll', 'lubridate', 'factoextra', 'forecats', 'tidymodels')
+             'plotly', 'RcppRoll', 'lubridate', 'factoextra', 'forcats', 'tidymodels')
 
 library(tidymodels)
 library(tidyverse)
