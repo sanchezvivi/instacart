@@ -10,6 +10,7 @@ output:
     orientation: rows
     social: menu
     source_code: embed
+    theme: lumen
     #logo: img/carrot-orange.png
 ---
 
@@ -220,18 +221,6 @@ base_products_names <- products_raw %>%
 
 ```
 
-
-Persona 
-=========================================
-
-### Persona
-
-```{r}
-
-include_graphics("img/persona.png")
-
-```
-
 Mercado 
 =========================================
 
@@ -284,7 +273,30 @@ Row
 
 ```{r}
 
+include_graphics("img/intro.png")
 
+```
+
+Persona 
+=========================================
+
+### Persona
+
+```{r out.width = "100%"}
+
+include_graphics("img/persona.png")
+
+```
+
+
+Pesquisa 
+=========================================
+
+### Persona
+
+```{r}
+
+include_graphics("img/pesquisa.png")
 
 ```
 
@@ -398,16 +410,18 @@ valueBox(value = round(churn_mean_ticket, 1),
 ```
 
 
-Row
------------------------------------------------------------------------
 
-### Distribuição
+<!-- Row -->
+<!-- ----------------------------------------------------------------------- -->
+<!-- ### Distribuição -->
 
-```{r avg_days}
 
-ggplotly(hist_ma)
 
-```
+<!-- ```{r avg_days} -->
+
+<!-- ggplotly(hist_ma) -->
+
+<!-- ``` -->
 
 
 <!-- ```{r freq} -->
@@ -428,6 +442,9 @@ ggplotly(hist_ma)
 
 <!-- ``` -->
 
+
+Row
+-----------------------------------------------------------------------
 
 ### Frequência
 
@@ -586,17 +603,4 @@ include_graphics("img/Dend_Churn.png")
 include_graphics("img/Dend_Recorr.png")
 
 ```
-
-
-Pesquisa
-=========================================
-
-```{r}
-
-
-
-```
-
-
-
  
