@@ -40,7 +40,7 @@
 #  geom_histogram(bins = 20)
 #
 
-base_aisles <- departments_raw
+base_aisles <- aisles_raw
 base_dept <- departments_raw
 base_ord_prior <- op_prior_raw
 base_ord_train <- op_train_raw
@@ -155,11 +155,11 @@ base_products <- products_raw
 base_orders_cl <- orders_raw %>% filter(eval_set != 'test')
 
 # Mesclando as bases 'order_prior' e 'order_train'
-base_ord_geral <- dplyr::union(base_ord_prior, base_ord_train)
+base_ord_geral <- dplyr::union(op_prior_raw, op_train_raw)
 #base_ord_geral <- base_ord_prior
 
 # Fazendo um left join da base de 'base_prod' com a base de base_aisles e base_dept, para trazer os nomes dos corredores e departamentos
-base_products_names <- base_products %>% left_join(base_aisles) %>% left_join(base_dept)
+base_products_names <- products_raw %>% left_join(aisles_raw) %>% left_join(departments_raw)
 base_products_names <- base_products_names[,c(1:2,5:5)]
 
 
@@ -372,158 +372,525 @@ hm_rec <- prod_100_rec %>% ggplot() +
 
 
 
-# Montando um hclust de produto por order de carrinho para produtos de clientes pouco recorrentes
-mat_similarity <- prod_ord_cart2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>%
-  pivot_wider(names_from = add_to_cart_order, values_from = perc)
 
-mat_similarity2 <- mat_similarity[1:200,]
 
-# Montando um hclust de produto por order de carrinho para produtos de clientes MAIS recorrentes
-mat_similarity_rec <- prod_ord_cart_rec2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>%
-  pivot_wider(names_from = add_to_cart_order, values_from = perc)
-
-mat_similarity_rec2 <- mat_similarity_rec[1:200,]
-
-# vet_clust <- c(1:((nrow(mat_similarity2)-2)/20))
-# vet_clust <- c(1:9)
-# vet_clust <- vet_clust * 20
-# vet_clust2 <- c(c(2:10),vet_clust)
-# silho <- tibble(k = numeric(), silho_avg = numeric(), negatives = numeric(), singulares = numeric())
 # 
-# for (i in vet_clust2){
-#   cutted <- hcut(mat_similarity2, hc_func = "hclust", hc_method = "complete", k=i, graph = TRUE)
-#   negativos <- sum(cutted$silinfo$widths$sil_width < 0) / length(cutted$silinfo$widths$sil_width)
-#   sing <- nrow(as_tibble(cutted$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
-#   silho <- silho %>% bind_rows(c(k = i, silho_avg = cutted$silinfo$avg.width, negatives = negativos, singulares = sing))
-#   print(i)
-# }
+# # Análise de HClust -------------------------------------------------------
+# # Nova Análise de HClust, onde agora o percentual é feito de maneira diferente. Será feita a contabilização dos percentuais por 
+# # order de inclusão no carrinho. Ou seja, cada ordem_cart terá um total de produtos que somará 100% e cada produtos terá seu percentual 
+# # na posição do carrinho.
 # 
-# best_k <- silho$k[silho$silho_avg == max(silho$silho_avg)]
-# best_k_neg <- silho$k[silho$negatives == min(silho$negatives)]
+# # Buscando os 100 principais produtos da base geral
+# library(tidymodels)
+# 
+# 
+# base_ord_geral_prod_total <- base_ord_geral_prod %>% left_join(base_orders_cl_mm)
+# # base_ord_geral_prod_total2 <- base_ord_geral_prod_total[,c(1:8,10,14)]
+# base_ord_geral_prod_total2 <- base_ord_geral_prod_total
+# 
+# prod_ord_cart_geral <- base_ord_geral_prod_total2 %>% dplyr::group_by(product_name, add_to_cart_order) %>%
+#   summarise(quantidade = n(),
+#             recorrencias = sum(reordered)) %>%
+#   mutate(rec_perc = recorrencias/quantidade) %>%
+#   arrange(-quantidade)
+# 
+# prod_ord_cart_geral2 <- prod_ord_cart_geral %>% dplyr::group_by(product_name) %>% mutate(perc = recorrencias/sum(recorrencias))
+# 
+# prod_ord_cart_geral2_list <- prod_ord_cart_geral2 %>% group_by(product_name) %>% summarise(recorrencias_total = sum(recorrencias)) %>% arrange(-recorrencias_total)
+# 
+# prod_ord_cart_geral2_list <- prod_ord_cart_geral2_list[1:50,1]
+# 
+# prod_100_geral <- prod_ord_cart_geral2 %>% right_join(prod_ord_cart_geral2_list)
+# 
+# 
+# 
+# ord_cart_prod2 <- prod_ord_cart %>% right_join(prod_ord_cart_geral2_list) %>% dplyr::group_by(add_to_cart_order) %>% mutate(perc = recorrencias/sum(recorrencias))
+# mat_similarity_ord <- ord_cart_prod2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>% pivot_wider(names_from = add_to_cart_order, values_from = perc)
+# # mat_similarity_ord <- mat_similarity_ord[1:100,]/
+# 
+# 
+# # Removendo os NAs
+# mat_similarity_ord <- mat_similarity_ord %>% replace(is.na(.),0)
+# 
+# # Normalizando os dados
+# receita <- mat_similarity_ord %>% recipe(product_name ~ .) %>%
+#   step_normalize(all_numeric(), -all_outcomes())
+# 
+# prep_receita <- prep(receita)
+# 
+# mat_similarity_ord_norm <- juice(prep_receita)[[ncol(juice(prep_receita))]] %>% cbind(juice(prep_receita)[,-ncol(juice(prep_receita))])
+# 
+# # Coletando as colunas com NA ou NaN
+# x <- inspect_na(mat_similarity_ord_norm)
+# col_remove <- x$col_name[x$pcnt == 100]
+# 
+# # Removendo as colunas com NA ou NaN
+# mat_similarity_ord_norm <- mat_similarity_ord_norm %>% select(-c(col_remove))
+# 
+# class(mat_similarity_ord_norm$.)
+# 
+# # dist_mat <- get_dist(mat_similarity_ord_norm, upper = TRUE, diag = TRUE)
+# #
+# # n <- 5
+# # vet_clust <- c(2:((nrow(mat_similarity_ord_norm)-1)/n))
+# # vet_clust <- vet_clust * n
+# # vet_clust2 <- c(c(2:9),vet_clust)
+# # silho <- tibble(k = numeric(), silho_avg = numeric(), negatives = numeric(), singulares = numeric())
+# #
+# # for (i in vet_clust2){
+# #   cutted <- hcut(mat_similarity_ord_norm, hc_func = "hclust", hc_method = "ward.D2", k=i, graph = TRUE)
+# #   negativos <- sum(cutted$silinfo$widths$sil_width < 0) / length(cutted$silinfo$widths$sil_width)
+# #   sing <- nrow(as_tibble(cutted$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
+# #   silho <- silho %>% bind_rows(c(k = i, silho_avg = cutted$silinfo$avg.width, negatives = negativos, singulares = sing))
+# #   print(i)
+# # }
+# #
+# # best_k <- silho$k[silho$silho_avg == max(silho$silho_avg)]
+# # best_k_neg <- silho$k[silho$negatives == min(silho$negatives)]
+# #
+# # p1 <- silho %>% ggplot(aes(x = k)) +
+# #   geom_line(aes(y = silho_avg), color = "blue") +
+# #   # geom_rect(aes(xmin = 35, xmax = 53, ymin = 0.33, ymax = 0.35), alpha = 1/500, color = "red", fill = "green") +
+# #   # geom_vline(xintercept = c(35, 53), show.legend = TRUE) +
+# #   geom_line(aes(y = singulares/40), color = "red") +
+# #   scale_y_continuous(
+# #     name = "Avg_Silh",
+# #     sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
+# #   ) +
+# #   geom_vline(xintercept = 6)
+# # p1
+# 
+# k_select <- 4
+# cutted_ord_not_rec <- hcut(mat_similarity_ord_norm, hc_func = "hclust", hc_method = "ward.D2", k=k_select, graph = TRUE)
+# 
+# cutted_ord_not_rec$labels <- as.character(mat_similarity_ord_norm$.)
+# 
+# # fviz_dend(cutted_ord_not_rec, k = k_select,
+# #           cex = 0.6,
+# #           type = "rectangle",
+# #           k_colors = c("darkgreen","orange"),
+# #           labels_track_height = 0.8,
+# #           # k_colors = c(1:4,6),
+# #           ggtheme = theme_light(),
+# #           main = "Dendrograma de Produtos - Clientes Não Recorrentes",
+# #           ylim = c(-30,60),
+# # )
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# # Hcluster com clientes recorrentes
+# ord_cart_prod_rec2 <- prod_ord_cart_rec %>% right_join(prod_ord_cart_geral2_list) %>% dplyr::group_by(add_to_cart_order) %>% mutate(perc = recorrencias/sum(recorrencias))
+# mat_similarity_ord_rec <- ord_cart_prod_rec2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>% pivot_wider(names_from = add_to_cart_order, values_from = perc)
+# # mat_similarity_ord_rec <- mat_similarity_ord_rec[1:100,]
+# 
+# 
+# # Removendo os NAs
+# mat_similarity_ord_rec <- mat_similarity_ord_rec %>% replace(is.na(.),0)
+# 
+# # Normalizando os dados
+# receita <- mat_similarity_ord_rec %>% recipe(product_name ~ .) %>%
+#   step_normalize(all_numeric(), -all_outcomes())
+# 
+# prep_receita <- prep(receita)
+# 
+# mat_similarity_ord_rec_norm <- juice(prep_receita)[[ncol(juice(prep_receita))]] %>% cbind(juice(prep_receita)[,-ncol(juice(prep_receita))])
+# 
+# # Coletando as colunas com NA ou NaN
+# x <- inspect_na(mat_similarity_ord_rec_norm)
+# col_remove <- x$col_name[x$pcnt == 100]
+# 
+# # Removendo as colunas com NA ou NaN
+# mat_similarity_ord_rec_norm <- mat_similarity_ord_rec_norm %>% select(-c(col_remove))
+# 
+# 
+# 
+# 
+# # dist_mat <- get_dist(mat_similarity_ord_rec_norm, upper = TRUE, diag = TRUE)
+# 
+# # n <- 5
+# # vet_clust <- c(2:((nrow(mat_similarity_ord_rec_norm)-1)/n))
+# # vet_clust <- vet_clust * n
+# # vet_clust2 <- c(c(2:9),vet_clust)
+# # silho <- tibble(k = numeric(), silho_avg = numeric(), negatives = numeric(), singulares = numeric())
+# #
+# # for (i in vet_clust2){
+# #   cutted <- hcut(mat_similarity_ord_rec_norm, hc_func = "hclust", hc_method = "ward.D2", k=i, graph = TRUE)
+# #   negativos <- sum(cutted$silinfo$widths$sil_width < 0) / length(cutted$silinfo$widths$sil_width)
+# #   sing <- nrow(as_tibble(cutted$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
+# #   silho <- silho %>% bind_rows(c(k = i, silho_avg = cutted$silinfo$avg.width, negatives = negativos, singulares = sing))
+# #   print(i)
+# # }
+# #
+# # best_k <- silho$k[silho$silho_avg == max(silho$silho_avg)]
+# # best_k_neg <- silho$k[silho$negatives == min(silho$negatives)]
+# #
+# # p1 <- silho %>% ggplot(aes(x = k)) +
+# #   geom_line(aes(y = silho_avg), color = "blue") +
+# #   # geom_rect(aes(xmin = 35, xmax = 53, ymin = 0.33, ymax = 0.35), alpha = 1/500, color = "red", fill = "green") +
+# #   # geom_vline(xintercept = c(35, 53), show.legend = TRUE) +
+# #   geom_line(aes(y = singulares/40), color = "red") +
+# #   scale_y_continuous(
+# #     name = "Avg_Silh",
+# #     sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
+# #   ) +
+# #   geom_vline(xintercept = 4)
+# # p1
+# 
+# k_select <- 4
+# cutted_ord_rec <- hcut(mat_similarity_ord_rec_norm, hc_func = "hclust", hc_method = "ward.D2", k=k_select, graph = TRUE)
+# 
+# cutted_ord_rec$labels <- as.character(mat_similarity_ord_rec_norm$.)
+# 
+# # fviz_dend(cutted_ord_rec, k = k_select,
+# #           cex = 0.6,
+# #           type = "rectangle",
+# #           k_colors = c("darkgreen","orange"),
+# #           labels_track_height = 0.8,
+# #           # k_colors = c(1:4,6),
+# #           ggtheme = theme_light(),
+# #           main = "Dendrograma de Produtos - Clientes Recorrentes",
+# #           ylim = c(-30,60),
+# # )
+# 
+# 
+# 
+# 
+# 
+# library(dendextend)
+# 
+# dend_not_rec <- as.dendrogram(cutted_ord_not_rec)
+# dend_rec <- as.dendrogram(cutted_ord_rec)
+# tang <- dendlist(dend_not_rec, dend_rec)
 
-#p1 <- silho %>% ggplot(aes(x = k)) +
-#  geom_line(aes(y = silho_avg), color = "blue") +
-#  # geom_rect(aes(xmin = 35, xmax = 53, ymin = 0.33, ymax = 0.35), alpha = 1/500, color = "red", fill = "green") +
-#  # geom_vline(xintercept = c(35, 53), show.legend = TRUE) +
-#  geom_line(aes(y = singulares/40), color = "red") +
-#  scale_y_continuous(
-#    name = "Avg_Silh",
-#    sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
-#  )
-#p1
+# dendlist(dend_not_rec, dend_rec) %>%
+#   untangle(method = "step1side") %>% # Find the best alignment layout
+#   tanglegram(labels_cex = 0.6,
+#              margin_inner = 15,
+#              k_labels = 4,
+#              k_branches = 4,
+#              axes = FALSE,
+#              lwd = 2,
+#              main_left = "Produtos - Clientes Pouco Recorrentes",
+#              cex_main_left = 1,
+#              main_right = "Produtos - Clientes Recorrentes",
+#              cex_main_right = 1,
+#              dLeaf = 0.1
+#   )
 
-#?dist(mat_similarity2, method = )
-
-cutted_not_rec <- hcut(mat_similarity2, hc_func = "hclust", hc_method = "complete", k=20, graph = TRUE)
-cutted_not_rec$labels <- mat_similarity2$product_name
 
 
-cutted_rec <- hcut(mat_similarity_rec2, hc_func = "hclust", hc_method = "complete", k=20, graph = TRUE)
-cutted_rec$labels <- mat_similarity_rec2$product_name
 
-#cutted_not_rec$size
 
-#fviz_dend(cutted_not_rec, k = 20, 
-#          cex = 0.7, 
-#          type = "rectangle", 
-#          k_colors = c("darkgreen","orange"),
-#          labels_track_height = 0.8,
-#          # k_colors = c(1:4,6),
-#          ggtheme = theme_light(),
-#          main = "Dendrograma de Produtos - Clientes Não Recorrentes")
-#
-# fviz_dend(cutted_rec, k = 20,
-#          cex = 0.7,
-#          type = "rectangle",
-#          k_colors = c("darkgreen","orange"),
-#          labels_track_height = 0.8,
-#          # k_colors = c(1:4,6),
-#          ggtheme = theme_light(),
-#          main = "Dendrograma de Produtos - Clientes Recorrentes")
-#
-#
-#
-#
-#cutted_not_rec$size
-#cutted_rec$size
 
-# Heatmap recorrencia: Aisles x Ordem_Carrinho -----------------------------------------
-
-# fazer uma análise pelos produtos que entram primeiro na cesta (por aisle)
-#ais_ord_cart <- base_ord_geral_prod_not_rec %>% group_by(aisle, add_to_cart_order) %>% 
-#  summarise(quantidade = n(), 
-#            recorrencias = sum(reordered)) %>% 
-#  mutate(rec_perc = recorrencias/quantidade) %>% 
-#  arrange(-quantidade)
-#
-#hm3<- ais_ord_cart %>% ggplot() +
-#  geom_tile(aes(aisle,add_to_cart_order, fill = rec_perc*100)) +
-#  scale_fill_gradient2()+
-#  theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1))
-#ggplotly(hm3, tooltip = "rec_perc")
-#
-#
-#
-## Buscando os principais 100 produtos
-#lista_produtos <- prod_ord_cart %>% dplyr::group_by(product_name) %>% summarise(recorrencia_media = mean(recorrencias)) %>% dplyr::arrange(-recorrencia_media)
-#
-#lista_produtos[1:100,1]
-#
-#hm_prod <- prod_ord_cart %>% dplyr::filter(product_name %in% lista_produtos[1:100,1]) %>% ggplot() +
-#  geom_tile(aes(product_name,add_to_cart_order, fill = rec_perc*100)) +
-#  scale_fill_gradient2()+
-#  theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1))
-#ggplotly(hm_prod, tooltip = "rec_perc")
-#
-#
-#
-## Produtos que entram primeiro na cesta -----------------------------------
-## fazer uma análise pelos produtos que entram primeiro na cesta (por nome de produto)
-#prod_ord_cart <- base_ord_geral_prod %>% group_by(product_name, add_to_cart_order) %>% 
-#  summarise(quantidade = n(), 
-#            recorrencias = sum(reordered)) %>% 
-#  mutate(rec_perc = recorrencias/quantidade) %>% 
-#  arrange(-quantidade)
-#
-#
-## fazer uma análise pelos produtos que entram primeiro na cesta (por aisle)
-#ais_ord_cart <- base_ord_geral_prod %>% group_by(aisle, add_to_cart_order) %>% 
-#  summarise(quantidade = n(), 
-#            recorrencias = sum(reordered)) %>% 
-#  mutate(rec_perc = recorrencias/quantidade) %>% 
-#  arrange(-quantidade)
-#
-#
-## fazer uma análise pelos produtos que entram primeiro na cesta (por departamento)
-#dept_ord_cart <- base_ord_geral_prod %>% group_by(department, add_to_cart_order) %>% 
-#  summarise(quantidade = n(), 
-#            recorrencias = sum(reordered)) %>% 
-#  mutate(rec_perc = recorrencias/quantidade) %>% 
-#  arrange(-quantidade)
-#
-## Número máximo de produtos em uma mesma compra
-#max(prod_ord_cart$add_to_cart_order)
-#max(base_ord_geral_prod$reordered)
-#
-#
-## fazer uma análise pelos produtos que entram por último
-#
-#
-## separar por compras de maior numero de produtos
-#
-## Seperar por quantidades de produtos comprados em cada compra
-## Fazer a relação de quantidade comprada e ordem de inserção na cesta
-#
-#
-## Comentários 2020-08-11
-## Na verdade, há um alto número de compras com 30 dias desde a última compra, pois o site deixa de registrar após mais de 30 dias
-#
-## Na tabela de 'order', verificar que o 'days_since_last_order' = NA, ocorre sempre para a primeira compra. Problema ao buscar o valor máximo, pois NA é maior que qualquer numero.
-#
-## Importante considerar que a base não possui somente os últimos 30 dias, porém sim todos as compras, somente não contabilizando intervalos superiores a 30 dias.
-#
-## Verificar a soma da diferença entre a o 'days_since_last_order' entre uma compra e a anterior. Se essa soma for 
-#
-## Critério para usuário menos recorrente: média móvel (5 compras) de days_since_prior_order > 8 (mediana), não contabilizando a primeira compra pela ocorrencia de NA. (pegar código Vivi)
-#
-#
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# # Montando um hclust de produto por order de carrinho para produtos de clientes pouco recorrentes
+# mat_similarity <- prod_ord_cart2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>%
+#   pivot_wider(names_from = add_to_cart_order, values_from = perc)
+# 
+# mat_similarity2 <- mat_similarity[1:200,]
+# 
+# # Montando um hclust de produto por order de carrinho para produtos de clientes MAIS recorrentes
+# mat_similarity_rec <- prod_ord_cart_rec2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>%
+#   pivot_wider(names_from = add_to_cart_order, values_from = perc)
+# 
+# mat_similarity_rec2 <- mat_similarity_rec[1:200,]
+# 
+# # vet_clust <- c(1:((nrow(mat_similarity2)-2)/20))
+# # vet_clust <- c(1:9)
+# # vet_clust <- vet_clust * 20
+# # vet_clust2 <- c(c(2:10),vet_clust)
+# # silho <- tibble(k = numeric(), silho_avg = numeric(), negatives = numeric(), singulares = numeric())
+# #
+# # for (i in vet_clust2){
+# #   cutted <- hcut(mat_similarity2, hc_func = "hclust", hc_method = "complete", k=i, graph = TRUE)
+# #   negativos <- sum(cutted$silinfo$widths$sil_width < 0) / length(cutted$silinfo$widths$sil_width)
+# #   sing <- nrow(as_tibble(cutted$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
+# #   silho <- silho %>% bind_rows(c(k = i, silho_avg = cutted$silinfo$avg.width, negatives = negativos, singulares = sing))
+# #   print(i)
+# # }
+# #
+# # best_k <- silho$k[silho$silho_avg == max(silho$silho_avg)]
+# # best_k_neg <- silho$k[silho$negatives == min(silho$negatives)]
+# 
+# #p1 <- silho %>% ggplot(aes(x = k)) +
+# #  geom_line(aes(y = silho_avg), color = "blue") +
+# #  # geom_rect(aes(xmin = 35, xmax = 53, ymin = 0.33, ymax = 0.35), alpha = 1/500, color = "red", fill = "green") +
+# #  # geom_vline(xintercept = c(35, 53), show.legend = TRUE) +
+# #  geom_line(aes(y = singulares/40), color = "red") +
+# #  scale_y_continuous(
+# #    name = "Avg_Silh",
+# #    sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
+# #  )
+# #p1
+# 
+# #?dist(mat_similarity2, method = )
+# 
+# cutted_not_rec <- hcut(mat_similarity2, hc_func = "hclust", hc_method = "complete", k=20, graph = TRUE)
+# cutted_not_rec$labels <- mat_similarity2$product_name
+# 
+# 
+# cutted_rec <- hcut(mat_similarity_rec2, hc_func = "hclust", hc_method = "complete", k=20, graph = TRUE)
+# cutted_rec$labels <- mat_similarity_rec2$product_name
+# 
+# #cutted_not_rec$size
+# 
+# #fviz_dend(cutted_not_rec, k = 20,
+# #          cex = 0.7,
+# #          type = "rectangle",
+# #          k_colors = c("darkgreen","orange"),
+# #          labels_track_height = 0.8,
+# #          # k_colors = c(1:4,6),
+# #          ggtheme = theme_light(),
+# #          main = "Dendrograma de Produtos - Clientes Não Recorrentes")
+# #
+# # fviz_dend(cutted_rec, k = 20,
+# #          cex = 0.7,
+# #          type = "rectangle",
+# #          k_colors = c("darkgreen","orange"),
+# #          labels_track_height = 0.8,
+# #          # k_colors = c(1:4,6),
+# #          ggtheme = theme_light(),
+# #          main = "Dendrograma de Produtos - Clientes Recorrentes")
+# #
+# #
+# #
+# #
+# #cutted_not_rec$size
+# #cutted_rec$size
+# 
+# 
+# base_ord_geral_prod_total <- base_ord_geral_prod %>% left_join(base_orders_cl_mm)
+# base_ord_geral_prod_total2 <- base_ord_geral_prod_total[,c(1:8,10,14)]
+# 
+# prod_ord_cart_geral <- base_ord_geral_prod_total2 %>% dplyr::group_by(product_name, add_to_cart_order) %>%
+#   summarise(quantidade = n(),
+#             recorrencias = sum(reordered)) %>%
+#   mutate(rec_perc = recorrencias/quantidade) %>%
+#   arrange(-quantidade)
+# 
+# prod_ord_cart_geral2 <- prod_ord_cart_geral %>% dplyr::group_by(product_name) %>% mutate(perc = recorrencias/sum(recorrencias))
+# 
+# prod_ord_cart_geral2_list <- prod_ord_cart_geral2 %>% group_by(product_name) %>% summarise(recorrencias_total = sum(recorrencias)) %>% arrange(-recorrencias_total)
+# 
+# prod_ord_cart_geral2_list <- prod_ord_cart_geral2_list[1:50,1]
+# 
+# prod_100_geral <- prod_ord_cart_geral2 %>% right_join(prod_ord_cart_geral2_list)
+# 
+# 
+# 
+# ord_cart_prod2 <- prod_ord_cart %>% right_join(prod_ord_cart_geral2_list) %>% dplyr::group_by(add_to_cart_order) %>% mutate(perc = recorrencias/sum(recorrencias))
+# mat_similarity_ord <- ord_cart_prod2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>% pivot_wider(names_from = add_to_cart_order, values_from = perc)
+# # mat_similarity_ord <- mat_similarity_ord[1:100,]/
+# 
+# 
+# # Removendo os NAs
+# mat_similarity_ord <- mat_similarity_ord %>% replace(is.na(.),0)
+# 
+# # Normalizando os dados
+# receita <- mat_similarity_ord %>% recipe(product_name ~ .) %>%
+#   step_normalize(all_numeric(), -all_outcomes())
+# 
+# prep_receita <- prep(receita)
+# 
+# mat_similarity_ord_norm <- juice(prep_receita)[[ncol(juice(prep_receita))]] %>% cbind(juice(prep_receita)[,-ncol(juice(prep_receita))])
+# 
+# # Coletando as colunas com NA ou NaN
+# x <- inspect_na(mat_similarity_ord_norm)
+# col_remove <- x$col_name[x$pcnt == 100]
+# 
+# # Removendo as colunas com NA ou NaN
+# mat_similarity_ord_norm <- mat_similarity_ord_norm %>% select(-c(col_remove))
+# 
+# class(mat_similarity_ord_norm$.)
+# 
+# # dist_mat <- get_dist(mat_similarity_ord_norm, upper = TRUE, diag = TRUE)
+# #
+# # n <- 5
+# # vet_clust <- c(2:((nrow(mat_similarity_ord_norm)-1)/n))
+# # vet_clust <- vet_clust * n
+# # vet_clust2 <- c(c(2:9),vet_clust)
+# # silho <- tibble(k = numeric(), silho_avg = numeric(), negatives = numeric(), singulares = numeric())
+# #
+# # for (i in vet_clust2){
+# #   cutted <- hcut(mat_similarity_ord_norm, hc_func = "hclust", hc_method = "ward.D2", k=i, graph = TRUE)
+# #   negativos <- sum(cutted$silinfo$widths$sil_width < 0) / length(cutted$silinfo$widths$sil_width)
+# #   sing <- nrow(as_tibble(cutted$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
+# #   silho <- silho %>% bind_rows(c(k = i, silho_avg = cutted$silinfo$avg.width, negatives = negativos, singulares = sing))
+# #   print(i)
+# # }
+# #
+# # best_k <- silho$k[silho$silho_avg == max(silho$silho_avg)]
+# # best_k_neg <- silho$k[silho$negatives == min(silho$negatives)]
+# #
+# # p1 <- silho %>% ggplot(aes(x = k)) +
+# #   geom_line(aes(y = silho_avg), color = "blue") +
+# #   # geom_rect(aes(xmin = 35, xmax = 53, ymin = 0.33, ymax = 0.35), alpha = 1/500, color = "red", fill = "green") +
+# #   # geom_vline(xintercept = c(35, 53), show.legend = TRUE) +
+# #   geom_line(aes(y = singulares/40), color = "red") +
+# #   scale_y_continuous(
+# #     name = "Avg_Silh",
+# #     sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
+# #   ) +
+# #   geom_vline(xintercept = 6)
+# # p1
+# 
+# k_select <- 4
+# cutted_ord_not_rec <- hcut(mat_similarity_ord_norm, hc_func = "hclust", hc_method = "ward.D2", k=k_select, graph = TRUE)
+# 
+# cutted_ord_not_rec$labels <- as.character(mat_similarity_ord_norm$.)
+# 
+# fviz_dend(cutted_ord_not_rec, k = k_select,
+#           cex = 0.6,
+#           type = "rectangle",
+#           k_colors = c("darkgreen","orange"),
+#           labels_track_height = 0.8,
+#           # k_colors = c(1:4,6),
+#           ggtheme = theme_light(),
+#           main = "Dendrograma de Produtos - Clientes Não Recorrentes",
+#           ylim = c(-30,60),
+# )
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# # Hcluster com clientes recorrentes
+# ord_cart_prod_rec2 <- prod_ord_cart_rec %>% right_join(prod_ord_cart_geral2_list) %>% dplyr::group_by(add_to_cart_order) %>% mutate(perc = recorrencias/sum(recorrencias))
+# mat_similarity_ord_rec <- ord_cart_prod_rec2 %>% dplyr::select(product_name,add_to_cart_order, perc) %>% pivot_wider(names_from = add_to_cart_order, values_from = perc)
+# # mat_similarity_ord_rec <- mat_similarity_ord_rec[1:100,]
+# 
+# mat_similarity_ord_rec$product_name == mat_similarity_ord$product_name
+# 
+# juice(prep_receita)[[ncol(juice(prep_receita))]] == mat_similarity_ord_rec$product_name
+# 
+# mat_similarity_ord_rec_norm$. == mat_similarity_ord$product_name
+# 
+# # Removendo os NAs
+# mat_similarity_ord_rec <- mat_similarity_ord_rec %>% replace(is.na(.),0)
+# 
+# # Normalizando os dados
+# receita <- mat_similarity_ord_rec %>% recipe(product_name ~ .) %>%
+#   step_normalize(all_numeric(), -all_outcomes())
+# 
+# prep_receita <- prep(receita)
+# 
+# mat_similarity_ord_rec_norm <- juice(prep_receita)[[ncol(juice(prep_receita))]] %>% cbind(juice(prep_receita)[,-ncol(juice(prep_receita))])
+# 
+# # Coletando as colunas com NA ou NaN
+# x <- inspect_na(mat_similarity_ord_rec_norm)
+# col_remove <- x$col_name[x$pcnt == 100]
+# 
+# # Removendo as colunas com NA ou NaN
+# mat_similarity_ord_rec_norm <- mat_similarity_ord_rec_norm %>% select(-c(col_remove))
+# 
+# 
+# 
+# 
+# # dist_mat <- get_dist(mat_similarity_ord_rec_norm, upper = TRUE, diag = TRUE)
+# 
+# # n <- 5
+# # vet_clust <- c(2:((nrow(mat_similarity_ord_rec_norm)-1)/n))
+# # vet_clust <- vet_clust * n
+# # vet_clust2 <- c(c(2:9),vet_clust)
+# # silho <- tibble(k = numeric(), silho_avg = numeric(), negatives = numeric(), singulares = numeric())
+# #
+# # for (i in vet_clust2){
+# #   cutted <- hcut(mat_similarity_ord_rec_norm, hc_func = "hclust", hc_method = "ward.D2", k=i, graph = TRUE)
+# #   negativos <- sum(cutted$silinfo$widths$sil_width < 0) / length(cutted$silinfo$widths$sil_width)
+# #   sing <- nrow(as_tibble(cutted$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
+# #   silho <- silho %>% bind_rows(c(k = i, silho_avg = cutted$silinfo$avg.width, negatives = negativos, singulares = sing))
+# #   print(i)
+# # }
+# #
+# # best_k <- silho$k[silho$silho_avg == max(silho$silho_avg)]
+# # best_k_neg <- silho$k[silho$negatives == min(silho$negatives)]
+# #
+# # p1 <- silho %>% ggplot(aes(x = k)) +
+# #   geom_line(aes(y = silho_avg), color = "blue") +
+# #   # geom_rect(aes(xmin = 35, xmax = 53, ymin = 0.33, ymax = 0.35), alpha = 1/500, color = "red", fill = "green") +
+# #   # geom_vline(xintercept = c(35, 53), show.legend = TRUE) +
+# #   geom_line(aes(y = singulares/40), color = "red") +
+# #   scale_y_continuous(
+# #     name = "Avg_Silh",
+# #     sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
+# #   ) +
+# #   geom_vline(xintercept = 4)
+# # p1
+# 
+# k_select <- 4
+# cutted_ord_rec <- hcut(mat_similarity_ord_rec_norm, hc_func = "hclust", hc_method = "ward.D2", k=k_select, graph = TRUE)
+# 
+# cutted_ord_rec$labels <- as.character(mat_similarity_ord_rec_norm$.)
+# 
+# fviz_dend(cutted_ord_rec, k = k_select,
+#           cex = 0.6,
+#           type = "rectangle",
+#           k_colors = c("darkgreen","orange"),
+#           labels_track_height = 0.8,
+#           # k_colors = c(1:4,6),
+#           ggtheme = theme_light(),
+#           main = "Dendrograma de Produtos - Clientes Recorrentes",
+#           ylim = c(-30,60),
+# )
+# 
+# 
+# 
+# 
+# cutted_ord_rec$cluster
+# 
+# 
+# library(dendextend)
+# 
+# dend_not_rec <- as.dendrogram(cutted_ord_not_rec)
+# dend_rec <- as.dendrogram(cutted_ord_rec)
+# 
+# tang <- dendlist(dend_not_rec, dend_rec)
+# 
+# dendlist(dend_not_rec, dend_rec) %>%
+#   untangle(method = "step1side") %>% # Find the best alignment layout
+#   tanglegram(labels_cex = 0.6,
+#              margin_inner = 15,
+#              k_labels = 4,
+#              k_branches = 4,
+#              axes = FALSE,
+#              lwd = 2,
+#              main_left = "Produtos - Clientes Pouco Recorrentes",
+#              cex_main_left = 1,
+#              main_right = "Produtos - Clientes Recorrentes",
+#              cex_main_right = 1,
+#              dLeaf = 0.1
+#   )
+# 
+# 
