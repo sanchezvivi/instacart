@@ -32,6 +32,13 @@ Sejam amigáveis uns com os outros, usem o melhor de cada um, trabalhem em grupo
 
 # Quinta
 
+Ordem da apresentação:
+
+persona
+necessidades e dores
+gráficos
+how might we
+
 # Objetivo
 
 Aumentar a recorrência de pedidos de usuários frequentes
