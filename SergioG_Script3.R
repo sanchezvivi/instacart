@@ -22,6 +22,7 @@ theme_update(text = element_text(family = "Brandon Text"),
 
 source('instacart_palette.R')
 
+
 # Importando os dados em .csv, usando o read.csv --------------------------
 
 #path <- "data\\"
@@ -87,11 +88,20 @@ base_orders_cl_mm <- base_orders_cl %>%
   ungroup() %>% 
   glimpse
 
-base_orders_cl_mm %>% group_by(user_id)
+# Gráfico da média móvel
+# base_orders_cl_not_rec2 %>%
+#   na.omit() %>%
+#   ggplot(aes(x = days_ma)) +
+#   geom_bar(fill = 'darkgreen') +
+#   geom_vline(xintercept = 8, color = 'orange',
+#              linetype = 'dashed') +
+#   theme_minimal()
 
 
-# Código de 2020-08-15
-           
+
+# Filtrando as bases para trazer as ordens dos 2 grupos -------------------
+
+
 # filtrando somente os clientes que estão abaixo da mediana
 base_orders_cl_mm <- base_orders_cl_mm %>% arrange(user_id,-order_number)
 
@@ -114,6 +124,10 @@ base_orders_cl_not_rec <- base_orders_cl_mm %>% right_join(users_churn)
 
 base_ord_geral_prod_rec <- base_ord_geral_prod %>% dplyr::filter(order_id %in% base_orders_cl_rec$order_id)
 base_ord_geral_prod_not_rec <- base_ord_geral_prod %>% dplyr::filter(order_id %in% base_orders_cl_not_rec$order_id)
+
+
+
+# Gráficos Aisles ---------------------------------------------------------
 
 # Gráficos de Departamento e corredor
 base_ord_geral_prod_rec %>% 
@@ -146,6 +160,8 @@ base_ord_geral_prod_not_rec %>%
 
 
 
+# Dados de Capa Estáticos -------------------------------------------------
+
 # Média de compras
 base_orders_cl_rec %>% group_by(user_id) %>% summarise(media_compras = mean(n())) %>% skim()
 
@@ -161,21 +177,13 @@ base_orders_cl_not_rec %>% group_by(user_id) %>% summarise(media_compras = mean(
 base_ord_geral_prod_not_rec
 
 
+
 # Trazendo a coluna user_id
 base_ord_geral_prod_rec2 <- base_ord_geral_prod_rec %>% left_join(base_orders_cl_rec)
 base_ord_geral_prod_rec2 <- base_ord_geral_prod_rec2[,c(1:8,10,14)]
 
 base_ord_geral_prod_not_rec2 <- base_ord_geral_prod_not_rec %>% left_join(base_orders_cl_not_rec)
 base_ord_geral_prod_not_rec2 <- base_ord_geral_prod_not_rec2[,c(1:8,10,14)]
-
-# Gráfico da média móvel
-# base_orders_cl_not_rec2 %>% 
-#   na.omit() %>% 
-#   ggplot(aes(x = days_ma)) +
-#   geom_bar(fill = 'darkgreen') +
-#   geom_vline(xintercept = 8, color = 'orange', 
-#              linetype = 'dashed') +
-#   theme_minimal()
 
 
 # HIPOTESE
@@ -276,7 +284,11 @@ n_prod1 = b/a
 
 prod_ord_cart2 <- prod_ord_cart %>% dplyr::group_by(product_name) %>% mutate(perc = recorrencias/sum(recorrencias))
 
+write.csv(prod_ord_cart2, "data\\prod_ord_cart2.csv", row.names = F)
+
 prod_ord_cart2_list <- prod_ord_cart2 %>% group_by(product_name) %>% summarise(recorrencias_total = sum(recorrencias)) %>% arrange(-recorrencias_total)
+
+write.csv(prod_ord_cart2_list, "data\\prod_ord_cart2_list.csv", row.names = F)
 
 prod_ord_cart2_list <- prod_ord_cart2_list[1:100,1]
 
@@ -317,7 +329,11 @@ n_prod2 = b/a
 
 prod_ord_cart_rec2 <- prod_ord_cart_rec %>% dplyr::group_by(product_name) %>% mutate(perc = recorrencias/sum(recorrencias))
 
+write.csv(prod_ord_cart_rec2, "data\\prod_ord_cart_rec2.csv", row.names = F)
+
 prod_ord_cart_rec2_list <- prod_ord_cart_rec2 %>% group_by(product_name) %>% summarise(recorrencias_total = sum(recorrencias)) %>% arrange(-recorrencias_total)
+
+write.csv(prod_ord_cart_rec2_list, "data\\prod_ord_cart_rec2_list.csv", row.names = F)
 
 prod_ord_cart_rec2_list <- prod_ord_cart_rec2_list[1:100,1]
 
