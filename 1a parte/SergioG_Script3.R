@@ -295,8 +295,8 @@ prod_ord_cart2_list <- prod_ord_cart2_list[1:100,1]
 prod_100_n_rec <- prod_ord_cart2 %>% right_join(prod_ord_cart2_list)
 
 prod_100_n_rec %>% ggplot() +
-  geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
-  scale_fill_gradient2(low = "white", high = "darkgreen", limits = c(0,40))+#,trans = scales::trans_new(name = "quad",transform = x2, inverse = x_2))+
+  geom_tile(aes(reorder(product_name, desc(recorrencias), FUN = mean),add_to_cart_order, fill = perc*100)) +
+  scale_fill_gradient2(low = "white", high = "darkgreen", limits = c(0,60))+#,trans = scales::trans_new(name = "quad",transform = x2, inverse = x_2))+
   theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) +
   labs(title = "Heatmap de Produtos x Cart_Order para clientes Churn", fill = "%", x = "Produto", y = "Ordem_Carrinho") +
   theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
@@ -356,8 +356,6 @@ view(prod_ord_cart_rec2_list$product_name[!(prod_ord_cart_rec2_list$product_name
 
 view(prod_ord_cart2_list$product_name[!(prod_ord_cart2_list$product_name %in% prod_ord_cart_rec2_list$product_name)])
 
-ggplot()+
-  geom_la
 
 # hm1 <- prod_100_rec %>% ggplot() +
 #   geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +

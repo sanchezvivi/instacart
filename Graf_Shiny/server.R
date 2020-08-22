@@ -31,161 +31,7 @@ source('..\\instacart_palette.R')
 
 #path <- "data\\"
 path <- "..\\data\\"
-# file_aisles <- "aisles.csv"
-# base_aisles <- read.csv(paste(path,file_aisles,sep = ""))
-# 
-# 
-# file_dept <- "departments.csv"
-# base_dept <- read.csv(paste(path,file_dept,sep = ""))
-# 
-# file_ord_prior <- "order_products__prior.csv"
-# base_ord_prior <- read.csv(paste(path,file_ord_prior,sep = "")) %>% glimpse()
-# 
-# file_ord_train <- "order_products__train.csv"
-# base_ord_train <- read.csv(paste(path,file_ord_train,sep = "")) %>% glimpse()
-# 
-# file_orders <- "orders.csv"
-# base_orders <- read.csv(paste(path,file_orders,sep = "")) %>% glimpse()
-# 
-# file_products <- "products.csv"
-# base_products <- read.csv(paste(path,file_products,sep = "")) %>% glimpse()
-# 
-# base_orders_cl <- base_orders %>% filter(eval_set != 'test')
-# 
-# base_orders_cl %>% group_by(user_id) %>% summarise(cnt = n())
-# 
-# 
-# 
-# # Mesclando as bases 'order_prior' e 'order_train'
-# base_ord_geral <- dplyr::union(base_ord_prior,base_ord_train)
-# 
-# # Fazendo um left join da base de 'base_prod' com a base de base_aisles e base_dept, para trazer os nomes dos corredores e departamentos
-# base_products_names <- base_products %>% left_join(base_aisles) %>% left_join(base_dept)
-# base_products_names <- base_products_names[,c(1:2,5:6)]
-# 
-# 
-# # Fazendo um left join da base de order_geral com a base_products_names, para trazer dados dos produtos comprados (nome_produto, corredor e departamento)
-# base_ord_geral_prod <- base_ord_geral %>% left_join(base_products_names)
-# 
-# 
-# # Filtro Média Móvel Vivi -------------------------------------------------
-# 
-# base_orders_cl_mm <- base_orders_cl %>% 
-#     filter(order_number != 1) %>% 
-#     arrange(user_id, order_number) %>% 
-#     mutate(order_hour_of_day = as.numeric(order_hour_of_day)) %>% 
-#     group_by(user_id) %>% 
-#     mutate(days_ma = roll_mean(days_since_prior_order, 5, fill = NA, na.rm = T)) %>% 
-#     ungroup() %>% 
-#     glimpse
-# 
-# # Gráfico da média móvel
-# # base_orders_cl_not_rec2 %>%
-# #   na.omit() %>%
-# #   ggplot(aes(x = days_ma)) +
-# #   geom_bar(fill = 'darkgreen') +
-# #   geom_vline(xintercept = 8, color = 'orange',
-# #              linetype = 'dashed') +
-# #   theme_minimal()
-# 
-# 
-# 
-# # Filtrando as bases para trazer as ordens dos 2 grupos -------------------
-# 
-# 
-# # filtrando somente os clientes que estão abaixo da mediana
-# base_orders_cl_mm <- base_orders_cl_mm %>% arrange(user_id,-order_number)
-# 
-# users_churn <- base_orders_cl_mm %>% 
-#     dplyr::group_by(user_id) %>% 
-#     summarise(ult_ordem = first(order_number), days_ma_new = nth(days_ma,3), 
-#               media_days = mean(days_since_prior_order)) %>% 
-#     filter(days_ma_new == 30 | (is.na(days_ma_new) & media_days >= 25)) %>% glimpse()
-# 
-# users_rec <- base_orders_cl_mm %>% dplyr::group_by(user_id) %>% 
-#     summarise(ult_ordem = first(order_number), days_ma_new = nth(days_ma,3), 
-#               media_days = mean(days_since_prior_order)) %>% 
-#     filter(days_ma_new < 8) %>% glimpse()
-# 
-# base_orders_cl_rec <- base_orders_cl_mm %>% right_join(users_rec)
-# base_orders_cl_not_rec <- base_orders_cl_mm %>% right_join(users_churn)
-# 
-# base_ord_geral_prod_rec <- base_ord_geral_prod %>% dplyr::filter(order_id %in% base_orders_cl_rec$order_id)
-# base_ord_geral_prod_not_rec <- base_ord_geral_prod %>% dplyr::filter(order_id %in% base_orders_cl_not_rec$order_id)
-# 
-# 
-# 
-# # Gráficos Aisles ---------------------------------------------------------
-# 
-# # # Gráficos de Departamento e corredor
-# # base_ord_geral_prod_rec %>% 
-# #     group_by(aisle) %>% 
-# #     summarise(rec = sum(reordered)/sum(base_ord_geral_prod_rec$reordered)) %>% 
-# #     arrange(-rec) %>% 
-# #     top_n(20) %>% 
-# #     ggplot(aes(reorder(aisle, -rec), rec*100)) +
-# #     theme_minimal() +
-# #     geom_col(fill = "darkgreen")+
-# #     labs(x = "Corredor", y = "Quantidade(%)", title = "Perfil Compra Recorr - Corredores")+
-# #     scale_y_continuous(expand = c(0,0), limits = c(0,15)) +
-# #     theme(axis.text.x = element_text(angle = 90, color = "darkorange", size = 12))
-# # 
-# # base_ord_geral_prod_not_rec %>% 
-# #     group_by(aisle) %>% 
-# #     summarise(rec = sum(reordered)/sum(base_ord_geral_prod_not_rec$reordered)) %>% 
-# #     arrange(-rec) %>% 
-# #     top_n(20) %>% 
-# #     ggplot(aes(reorder(aisle, -rec), rec*100)) +
-# #     theme_minimal() +
-# #     geom_col(fill = "darkgreen")+
-# #     labs(x = "Corredor", y = "Quantidade(%)", title = "Perfil Compra Churn - Corredores")+
-# #     scale_y_continuous(expand = c(0,0), limits = c(0,15)) +
-# #     theme(axis.text.x = element_text(angle = 90, color = "darkorange", size = 12))
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# # Dados de Capa Estáticos -------------------------------------------------
-# 
-# # Média de compras
-# base_orders_cl_rec %>% group_by(user_id) %>% summarise(media_compras = mean(n())) %>% skim()
-# 
-# base_orders_cl_not_rec %>% group_by(user_id) %>% summarise(media_compras = mean(n())) %>% skim()
-# 
-# 
-# # Dias entre Compras - Média
-# 
-# base_orders_cl_rec %>% group_by(user_id) %>% summarise(media_compras = mean(days_since_prior_order)) %>% skim()
-# 
-# base_orders_cl_not_rec %>% group_by(user_id) %>% summarise(media_compras = mean(days_since_prior_order)) %>% skim()
-# 
-# base_ord_geral_prod_not_rec
-# 
-# 
-# 
-# # Trazendo a coluna user_id
-# base_ord_geral_prod_rec2 <- base_ord_geral_prod_rec %>% left_join(base_orders_cl_rec)
-# base_ord_geral_prod_rec2 <- base_ord_geral_prod_rec2[,c(1:8,10,14)]
-# 
-# base_ord_geral_prod_not_rec2 <- base_ord_geral_prod_not_rec %>% left_join(base_orders_cl_not_rec)
-# base_ord_geral_prod_not_rec2 <- base_ord_geral_prod_not_rec2[,c(1:8,10,14)]
-# 
-# 
-# # HIPOTESE
-# # Compras que tem recorrência, provavelmente é feita, repetindo uma cesta anterior.
-# # Compras com menor recorrência tem maior variaçao na cesta de compras
-# 
-# 
-# # Rodando o modelo para os cem principais recorrentes e os 100 piores recorrentes
-# 
-# 
-# 
-# # Histograma de Produtos comprados por Ordem ------------------------------
-# order_n_total <- base_ord_geral_prod_not_rec %>% group_by(order_id) %>% summarise(quant_prod = n(), unid_recompra = sum(reordered))
-# 
+ 
 x4 <- function(x) x^4
 
 x_4<- function(x) sqrt(sqrt(x))
@@ -193,90 +39,6 @@ x_4<- function(x) sqrt(sqrt(x))
 x2 <- function(x) x^2
 
 x_2<- function(x) sqrt(x)
-# 
-# # # Produtos Mais Recorrentes ----------------------------------------------------
-# # # em qual posição do carrinho, se localizam o produtos MAIS recorrentes
-# # rec_ord_cart <- base_ord_geral_prod_rec2 %>% group_by(add_to_cart_order) %>% 
-# #     summarise(recorrencias = sum(reordered),
-# #               total = n()) %>% 
-# #     mutate(rec_perc = recorrencias/total) %>% 
-# #     arrange(add_to_cart_order)
-# # 
-# # rec_ord_cart %>% ggplot(aes(add_to_cart_order, rec_perc)) +
-# #     geom_col() +
-# #     labs(title = "Gráfico de ordem_carrinho x percentual de produtos recorrentes")
-# # 
-# # 
-# # # Produtos Menos Recorrentes ----------------------------------------------------
-# # # em qual posição do carrinho, se localizam o produtos não-recorrentes
-# # nao_rec_ord_cart <- base_ord_geral_prod_not_rec2 %>% group_by(add_to_cart_order) %>% 
-# #     summarise(total = n(),
-# #               nao_recorrencia = total - sum(reordered)) %>% 
-# #     mutate(nao_rec_perc = nao_recorrencia/total) %>% 
-# #     arrange(add_to_cart_order)
-# # 
-# # nao_rec_ord_cart %>% ggplot(aes(add_to_cart_order, nao_rec_perc)) +
-# #     geom_col() +
-# #     labs(title = "Gráfico de ordem_carrinho x percentual de produtos nao_recorrentes")
-# 
-# 
-# 
-# 
-# # Heatmaps Integradora Intermediária --------------------------------------
-# # fazer uma análise pelos produtos que entram primeiro na cesta (por produto), nas compras feitas por clientes pouco recorrentes.
-# 
-# # HIPÓTESE:
-# # Existe uma relação entre a posição do produto no carrinho e a recorrência de compra
-# 
-# # PREMISSA DA ANÁLISE:
-# # Separar os clientes em 2 catergorias: Clientes muito recorrentes e clientes pouco recorrentes.
-# # Essa definição inicial é feita com base na variável 'days_since_pior_order'. 
-# # Primeiro se calcula o valor médio dessa variável, por user_id.
-# # Uma vez definidas os valores médios por cliente, calculam-se os quartis.
-# # São definidos como clientes pouco recorrentes, o que estão abaixo da madiana e Clientes recorrentes, aqueles que estão acima da mediana.
-# # Definido isso, será feita uma análise para cada um dos grupos de modo a buscar as discrepâncias.
-# 
-# # GRÁFICOS:
-# # Foram criados 2 Heatmaps, um para cada grupo de clientes, onde são apresentados os percentuais de recorrencias de produtos (100 produtos de maior 
-# # recorrência de compra), nas diferentes posições do carrinho de compras.
-# 
-# # INSIGHT:
-# # Comparando ambos os gráficos, não se percebem relevantes variações nem nos produtos apresentados, nem tampouco na proporção do produto nas diversas posições.
-# 
-# prod_ord_cart <- base_ord_geral_prod_not_rec2 %>% dplyr::group_by(product_name, add_to_cart_order) %>% 
-#     summarise(quantidade = n(), 
-#               recorrencias = sum(reordered)) %>% 
-#     mutate(rec_perc = recorrencias/quantidade) %>% 
-#     arrange(-quantidade)
-# 
-# # Definindo a média do número de produtos recorrentes
-# a <- base_ord_geral_prod_not_rec2$order_id %>% n_distinct() #número de pedidos
-# b <- base_ord_geral_prod_not_rec2$reordered %>% sum() #numero de produtos
-# n_prod1 = b/a
-# texto1 <- paste("Média Produtos/Ordem = ", round(n_prod1,2), sep = "")
-# 
-# prod_ord_cart2 <- prod_ord_cart %>% dplyr::group_by(product_name) %>% mutate(perc = recorrencias/sum(recorrencias))
-# 
-# prod_ord_cart2_list <- prod_ord_cart2 %>% group_by(product_name) %>% summarise(recorrencias_total = sum(recorrencias)) %>% arrange(-recorrencias_total)
-# 
-# 
-# # fazer uma análise pelos produtos que entram primeiro na cesta (por produto), nas compras feitas por clientes MAIS recorrentes.
-# prod_ord_cart_rec <- base_ord_geral_prod_rec2 %>% dplyr::group_by(product_name, add_to_cart_order) %>% 
-#     summarise(quantidade = n(), 
-#               recorrencias = sum(reordered)) %>% 
-#     mutate(rec_perc = recorrencias/quantidade) %>% 
-#     arrange(-quantidade)
-# 
-# # Definindo a média do número de produtos recorrentes
-# a <- base_ord_geral_prod_rec2$order_id %>% n_distinct() #número de pedidos
-# b <- base_ord_geral_prod_rec2$reordered %>% sum() #numero de produtos
-# n_prod2 = b/a
-# texto2 <- paste("Média Produtos/Ordem = ", round(n_prod2,2), sep = "")
-# 
-# 
-# prod_ord_cart_rec2 <- prod_ord_cart_rec %>% dplyr::group_by(product_name) %>% mutate(perc = recorrencias/sum(recorrencias))
-# 
-# prod_ord_cart_rec2_list <- prod_ord_cart_rec2 %>% group_by(product_name) %>% summarise(recorrencias_total = sum(recorrencias)) %>% arrange(-recorrencias_total)
 
 prod_ord_cart2 <- read.csv(paste(path, "prod_ord_cart2.csv", sep = "")) %>% as.tibble()
 
@@ -287,7 +49,26 @@ prod_ord_cart2_list <- read.csv(paste(path, "prod_ord_cart2_list.csv", sep = "")
 prod_ord_cart_rec2_list <- read.csv(paste(path, "prod_ord_cart_rec2_list.csv", sep = "")) %>% as.tibble()
 
 
-# Define server logic required to draw a histogram
+# tidied_pca %>% filter(component %in% paste0("PC", 1:4)) %>% 
+#     group_by(component) %>% 
+#     top_n(8, abs(value)) %>% 
+#     ungroup() %>% 
+#     mutate(terms = reorder_within(terms, abs(value), component)) %>% 
+#     ggplot(aes(abs(value), terms, fill = value > 0)) + 
+#         geom_col() + 
+#         facet_wrap(~component, scales = "free_y") + 
+#         scale_y_reordered() + 
+#         labs( x = "Absolute value of contribution", y = NULL, fill = "Positive?" )
+
+# Próximos passos
+# Tranformar o Gráfico em função para otimizar o código
+# Colocar novas escalas
+# Passar para o Dashboard
+# Incluir gráficos para os corredores ou departamentos
+# Incluir checkboxes para departamentos ou corredores
+
+
+
 shinyServer(function(input, output) {
     output$heatmap1 <- renderPlot({
         prod_ord_cart2_list2 <- prod_ord_cart2_list[1:input$slider_n_prod,1]
@@ -299,8 +80,9 @@ shinyServer(function(input, output) {
         n_prod1 <- 3.32
         texto1 <- "Média Produtos/Ordem = 3,32"
         if (input$funcao == "1"){
-            prod_100_n_rec %>% ggplot() +
-                geom_tile(aes(product_name,add_to_cart_order, fill = perc*100)) +
+            prod_100_n_rec %>% # mutate(product_name = reorder_within(product_name, abs(perc), add_to_cart_order)) %>%  
+                ggplot() +
+                geom_tile(aes(reorder(product_name,add_to_cart_order,perc), add_to_cart_order, fill = perc*100)) +
                 scale_fill_gradient2(low = "white", 
                                      high = "darkgreen", 
                                      limits = c(0,40))+#,trans = scales::trans_new(name = "quad",transform = x2, inverse = x_2))+
