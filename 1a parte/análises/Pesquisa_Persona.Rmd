@@ -1,0 +1,195 @@
+---
+title: "Pesquisa"
+author: "Leonardo Gandur Giovanelli"
+date: "11/08/2020"
+output: 
+  html_document:
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo= FALSE, warning =FALSE, include=TRUE ,message = FALSE)
+```
+
+
+```{r}
+library(rmarkdown)
+
+library(tidyverse)
+library(lubridate)
+library(Hmisc)
+
+library(skimr)
+library(inspectdf)
+
+library(ggplot2)
+library(ggpubr)
+library(plotly)
+
+library(knitr)
+
+library(readxl)
+
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
+library(syuzhet)
+library(textshape)
+library(tm)
+```
+
+```{r,include=TRUE}
+setwd("C:/Users/leona/OneDrive/Insper/AI/Project_Pesquisa/Pesquisa/")
+```
+
+```{r,include=TRUE}
+#data <- read_excel("C:/Users/leona/OneDrive/Insper/AI/Project_Pesquisa/Pesquisa/Pesquisa de Compras Online(2).xlsx")
+
+data <- read_excel("Pesquisa de Compras Online(2).xlsx")
+
+data <- mutate_if(data, is.character, tolower)
+data<- data[,colSums(is.na(data))<nrow(data)]
+data<- data[rowSums(is.na(data))<ncol(data),]
+
+
+read_data <- function(data,column,filter){
+  col <- which( colnames(data)==column )
+  colnames(data)[col] <- "x"
+  data <- data %>% drop_na(x)
+  data <- data[data$x==filter,]
+  colnames(data)[col] <- column
+  data<- data[,colSums(is.na(data))<nrow(data)]
+  data<- data[rowSums(is.na(data))<ncol(data),]
+  
+  return(data)
+}
+```
+
+#Utiliza app
+```{r,include=TRUE}
+data_1<- read_data(data,"Faz compras via app?" ,'sim')
+
+data_1<- data_1%>% drop_na("As compras de supermecado são feitas por app ou fisicamente?2")
+
+## "As compras de supermecado são feitas por app ou fisicamente?2"
+data_1F<- read_data(data_1,"As compras de supermecado são feitas por app ou fisicamente?2",'fisicamente')
+data_1APP <- read_data(data_1,"As compras de supermecado são feitas por app ou fisicamente?2",'app')
+```
+
+
+#NÃO utiliza app
+```{r,include=TRUE}
+data_0<- read_data(data,"Faz compras via app?" ,'não')
+
+## "Já fez compras de supermercado app?"
+data_01<- read_data(data_0,"Já fez compras de supermercado app?",'sim')  #para aqui
+data_00 <- read_data(data_0,"Já fez compras de supermercado app?",'nao')
+
+##"E outro tipo de produto?"
+data_001 <- read_data(data_00 ,"E outro tipo de produto?" ,'sim')
+data_000 <- read_data(data_00 ,"E outro tipo de produto?" ,'não')
+```
+
+
+# Funções de análise das palavras
+
+## Frequência (dataframe): palavras(df,cols)
+```{r,include=TRUE}
+
+palavras <- function(df,cols){
+  x <- subset(df,select=cols)
+  x<- VCorpus(VectorSource(x))
+  
+x <- x%>%
+ tm_map(content_transformer(tolower)) %>%
+ tm_map(stripWhitespace) %>%
+ tm_map(removeNumbers) %>%
+ tm_map(removePunctuation) %>%
+ tm_map(removeWords, iconv(stopwords("portuguese"))) %>% 
+ tm_map(stemDocument, language = "portuguese")
+
+x<- TermDocumentMatrix(x)
+x<- as.matrix(x)
+x<- sort(rowSums(x),decreasing=TRUE)
+x <- data.frame(word = names(x),freq=x)
+
+if ("mercadolivr" %in% rownames(x)){
+c=which(rownames(x)=="mercadolivr")
+rownames(x)[c] <- "merc.livre"
+x$word[c] <- "merc.livre"
+}
+
+return(x)
+}
+x <- palavras(data,"Quais apps costuma usar?")
+```
+
+## Frequência (gráfico): freq_palavras(df,cols,q)
+```{r,include=TRUE}
+freq_palavras <- function(df,cols,q){
+    x <- palavras(df,cols)
+lim <- x$freq[q]
+g <- x %>% 
+  filter(freq>= lim) %>% 
+  ggplot(aes(x=reorder(word,freq),y=freq))+
+  geom_col()+
+  labs(x="",title=deparse(substitute(df)))+
+  coord_flip()
+ 
+#g <- ggplotly(g)
+return(g)
+}
+```
+
+## Wordcllud: wc_palavras (df,cols,q)
+```{r,include=TRUE}
+wc_palavras <- function(df,cols,q){
+   x <- palavras(df,cols)
+  wordcloud(words = x$word, freq = x$freq, min.freq = 1,           max.words=q, random.order=FALSE, rot.per=0,
+  colors=brewer.pal(1, "Dark2"))
+}
+```
+ 
+ 
+```{r,include=FALSE}
+text1 <- function(df,data){
+l <- nrow(df)
+ld=round(l/nrow(data),4)*100
+print(paste(l," pessoas fazem parte deste grupo, ",ld,"% do total"))
+}
+```
+
+# Grupo que usa app
+
+## Quais apps costuma usar?
+```{r,include=TRUE}
+h1 <- freq_palavras(data_1F,"Quais apps costuma usar?",10)
+h2 <- freq_palavras(data_1APP,"Quais apps costuma usar?",6)
+
+d1 <- palavras(data_1F,"Quais apps costuma usar?")
+colnames(d1)[2] <- "F"
+d2 <- palavras(data_1APP,"Quais apps costuma usar?")
+colnames(d1)[2] <- "APP"
+library(plyr)
+x <- join(d1, d2,by="word",type ="full")
+x <- cbind(d1, d2)
+ggarrange(h1,h2,ncol = 2, nrow = 1)
+```
+## Grupo faz compra de supermecado fisicamente
+```{r,include=TRUE}
+df=data_1F
+text1(df,data)
+freq_palavras(df,"Quais apps costuma usar?",10)
+wc_palavras(df,"Quais apps costuma usar?",8)
+```
+
+## Grupo faz compra de supermecado por app
+
+###Quais apps costuma usar?"
+```{r,include=TRUE}
+df <- data_1APP
+pergunta <- "Quais apps costuma usar?"
+text1(df,data)
+freq_palavras(df,pergunta ,10)
+wc_palavras(df,pergunta,8)
+```
