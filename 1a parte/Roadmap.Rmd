@@ -1,0 +1,90 @@
+---
+title: "Roadmap - 1a apresentação"
+author: "Viviane Sanchez"
+date: "8/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Para que essas aulas fluam bem, é muito importante que façam duas atividades durante essa semana, até sexta-feira:
+
+1- evoluir as três análises que começaram no sábado
+2- organizar as entrevistas que realizaram na semana passada
+
+No ponto 1, sugiro que façam três análises, cada uma com esses quatro pontos:
+1.i) a hipótese que essa análise queria verificar
+1.ii) as premissas que estão sendo levadas em conta
+1.iii) o(s) gráfico(s) dessa análise (lembrem-se bem das aulas da Mari aqui ;)
+1.iv) os insights que tiraram dessa análise
+Prefiram contemplar esses quatro pontos nas três análises, ao invés de focar em apenar uma análise super profunda ;)
+
+Para o ponto 2, criarei um novo mural para vocês apenas organizarem as entrevistas, poderá ser realizada individualmente
+
+Organizem-se durante essa semana pessoal! Acredito que para o primeiro ponto vocês podem reservar entre 3 a 4 horas de desenvolvimento em grupo; e para o segundo ponto mais ou menos 1 hora sozinho
+
+Lembrem-se de criarem um ambiente saudável de troca de ideias ;) Usem os métodos que aprendemos caso necessário. Usem "time-box" para momentos de discussão, usem post-its para colocarem ideias num painel, e caso haja pontos divergentes, usem a votação "dot-voting" com aqueles pontinhos coloridos ;)))
+Sejam amigáveis uns com os outros, usem o melhor de cada um, trabalhem em grupo com um objetivo em comum!!
+
+
+# Quinta
+
+# Objetivo
+
+Aumentar a recorrência de pedidos de usuários frequentes
+
+# Análise exploratória
+
+grupos de clientes: 
+- Tudo
+- Clientes com menos de 10 pedidos e Média móvel de dias dos últimos 5 pedidos acima de 8 
+
+
+## Base Instacart
+
+Certezas
+ - Quanto maior o número de pedidos maior a fidelidade e rentabilidade
+ - Uma diminuição da recorrência de pedidos possui maior chance de churn
+
+Ordem das análises
+    1. Hipótese
+    2. Premissas de análise
+    3. Gráficos
+    4. Insights
+
+### Pedidos (Vivi)
+
+  - Estudo dos horários mais frequentes
+  - Média móvel de 5 pedidos
+  
+  grupos:
+    
+  
+  - Gráficos:
+    - histograma da média móvel
+    - heatmap horários
+    - gráficos da frequência de compra
+    
+### Produtos (Marcelo/Rafa)
+
+  - Produtos 
+  - Departamentos/Corredores 
+  
+  - Identificar os prinicipais produtos/categorias dos grupos de clientes
+  - Gráficos a definir
+  
+## Ordem da compra (Sérgio)
+  - ordem de inserção no carrinho
+  - quantidade comprada
+
+## Pesquisa (Leo)
+
+- Falar sobre experiência da entrevista
+- Desafios/Pontos a melhorar
+- pessoas entrevistadas 
+- números
+- wordcloud
+

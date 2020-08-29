@@ -1,0 +1,278 @@
+---
+title: "Instacart - parte 1"
+author: "Leonardo Giovanelli, Marcelo Franceschini, Rafael Costa, Sérgio Gomes, Viviane Sanchez"
+date: '`r Sys.Date()`'
+institute: "PADS - Insper"
+encoding: "UTF-8"
+output: 
+ flexdashboard::flex_dashboard:
+    storyboard: true
+    social: menu
+    source: embed
+    
+---
+
+### Referências
+
+- Análise exploratória [Instacart](https://www.instacart.com/datasets/grocery-shopping-2017)
+
+- [Flexdashbaord](https://rmarkdown.rstudio.com/flexdashboard/using.html#overview)
+
+- https://drsimonj.svbtle.com/creating-corporate-colour-palettes-for-ggplot2
+
+
+
+
+```{r setup, include=FALSE, fig.align = 'center'}
+
+knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE)
+
+library(flexdashboard)
+library(plotly)
+library(tidyverse)
+library(skimr)
+library(inspectdf)
+library(ggrepel)
+library(ggthemes)
+library(lubridate)
+library(grid)
+library(plotly)
+library(RcppRoll)
+library(extrafont)
+
+font_import()
+
+theme_set(theme_minimal())
+theme_update(text = element_text(family = "Brandon Text"),
+             plot.title = element_text(face = "bold"))
+
+source('instacart_palette.R')
+          
+```
+
+# Arquivos
+
+```{r}
+
+arquivos <- list.files(path = 'data/', 
+                       pattern = "*.csv",
+                       full.names = TRUE) %>% sort()
+
+aisles_raw <- read_csv(arquivos[1])
+
+departments_raw <- read_csv(arquivos[2])
+
+op_prior_raw <- read_csv(arquivos[3])
+
+#op_train_raw <- read_csv(arquivos[4])
+
+orders_raw <- read_csv(arquivos[5])
+
+products_raw <- read_csv(arquivos[6])
+
+
+```
+
+## Ajuste da base
+
+```{r}
+
+orders <- orders_raw %>% 
+  filter(eval_set != 'test') %>% 
+  filter(order_number != 1) %>% 
+  arrange(user_id, order_number) %>% 
+  mutate(order_hour_of_day = as.numeric(order_hour_of_day),
+         w_day = wday(if_else(order_dow == 0, 7, order_dow), label = TRUE)
+         #days_since_prior_order = if_else(is.na(days_since_prior_order), 0,
+                                          #days_since_prior_order)
+         ) %>% 
+  group_by(user_id) %>% 
+  mutate(days_ma = roll_mean(days_since_prior_order, 5, fill = NA, na.rm = T)) %>% 
+  ungroup() %>% 
+  glimpse
+
+  
+```
+
+
+```{r}
+
+hist_ma <- orders %>% 
+  na.omit() %>% 
+  ggplot(aes(x = days_ma)) +
+  geom_bar(fill = ic_cols('dark-green')) +
+  geom_vline(xintercept = 8, color = ic_cols('orange'), 
+             linetype = 'dashed', size = 0.8) +
+  scale_y_continuous(label = scales::label_number_si()) +
+  labs(title = 'Distribuição da média móvel de dias entre os últimos 5 pedidos',
+       x = 'Dias desde o último pedido', y = '')
+  
+ggplotly(hist_ma)
+
+```
+
+
+## Grupo de usuários que fizeram menos de 10 compras
+
+```{r}
+
+orders_count <- orders %>% 
+  #filter(days_since_prior_order < 30) %>% 
+  group_by(user_id) %>% 
+  count() %>% 
+  transmute(compras = n)
+
+orders2 <- orders %>% 
+  left_join(orders_count, by = 'user_id') %>% 
+  mutate(abaixo_10 = if_else(compras <= 10, 'Menos de 10 pedidos', 'Mais de 10 pedidos'),
+         grupo = case_when(days_ma <= 8 ~ 'Recorrente',
+                           days_ma < 30 ~ 'Alvo',
+                           days_ma >= 30 ~ 'Indefinido',
+                           is.na(days_ma) ~ 'Indefinido'),
+         grupo = factor(grupo, levels = c('Recorrente', 'Alvo','Indefinido'), ordered = TRUE))
+
+orders2 %>% 
+  group_by(grupo) %>% 
+  skim()
+
+orders2 %>%  
+  na.omit() %>% 
+  filter(abaixo_10 == 'Menos de 10 pedidos') %>% 
+  ggplot(aes(x = days_ma)) +
+  geom_bar(fill = ic_cols('dark-green')) +
+  geom_vline(xintercept = 8, color = ic_cols('orange'), 
+             linetype = 'dashed', size = 0.8) +
+  scale_y_continuous(label = scales::label_number_si()) +
+  labs(title = 'Distribuição da média móvel de dias entre os últimos 5 pedidos',
+       x = 'Dias desde o último pedido', y = '')
+  
+
+```
+
+# Graficos
+
+## Frequência de compra
+
+```{r}
+
+orders2 %>% 
+  group_by(w_day) %>% 
+  summarise(n = n()) %>% 
+  mutate(p = n/sum(n)) %>% 
+  ggplot(aes(w_day, p)) +
+  geom_col(fill = ic_cols("green")) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_color_instacart() +
+  labs(title = 'Frequência total de pedidos',
+       x = 'Dia da semana') + 
+  theme_minimal()
+
+
+orders2 %>% 
+  filter(grupo != 'Indefinido') %>% 
+  group_by(grupo, w_day) %>% 
+  summarise(n = n()) %>% 
+  mutate(p = n/sum(n)) %>% 
+  ggplot(aes(w_day, p, fill = grupo)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_fill_instacart(reverse = TRUE) +
+  labs(title = 'Frequência de pedidos por grupo de clientes' ,
+       x = 'Dia da semana')
+
+
+```
+
+## Dias desde a última compra
+ 
+```{r}
+
+orders_grouped <- orders2 %>% 
+  group_by(w_day, order_hour_of_day, grupo, abaixo_10) %>% 
+  summarise(avg_compras = mean(compras, na.rm = T),
+            avg_days = mean(days_since_prior_order, na.rm = T))
+
+## Insight
+orders_grouped %>% 
+  group_by(grupo) %>% 
+  skim()
+
+sc1 <- scale_fill_viridis_c()
+sc2 <- scale_fill_viridis_c()
+
+avg_dias_total <- orders_grouped %>% 
+  ggplot(aes(y = w_day, x = order_hour_of_day, fill = avg_days)) +
+  geom_tile() +
+  scale_fill_instacart(discrete = FALSE, palette = 'cool')
+
+avg_dias_groups <- orders_grouped %>% 
+  ggplot(aes(y = w_day, x = order_hour_of_day, fill = avg_days)) +
+  geom_tile() + 
+  facet_wrap(~abaixo_10, nrow = 2) +
+  scale_fill_viridis_c() +
+  #scale_fill_instacart(discrete = FALSE, palette = "greens") +
+  labs(y = '', x = 'Horário', fill = 'Média de dias') +
+  theme_minimal()
+
+ggplotly(avg_dias_groups)
+
+```
+
+
+### Produtos
+
+Todos os clientes dos grupos alvo e recorrente estão na base prior, portanto não é necessário juntar a base train
+
+```{r}
+
+orders2 %>% 
+  group_by (eval_set, grupo) %>% 
+  count()
+
+```
+
+
+```{r}
+
+base_products_names <- products_raw %>% 
+  left_join(aisles_raw) %>% 
+  left_join(departments_raw) %>% 
+  select(product_id, aisle_id, department_id, everything())
+
+orders_full <- orders2 %>% 
+  filter(grupo != 'Indefinido') %>% 
+  left_join(op_prior_raw, by = 'order_id') %>% 
+  left_join(base_products_names, by = 'product_id')
+
+```
+
+top produtos
+
+```{r}
+
+library(tidytext)
+
+orders_full %>% 
+  group_by(grupo, product_name) %>%
+  summarise(qtd = n()) %>% 
+  top_n(20, qtd) %>% 
+  ungroup() %>% 
+  #mutate(department = reorder_within(department, desc(qtd), grupo)) %>% 
+  ggplot(aes(x = reorder(product_name, desc(qtd)), y = qtd)) +
+  geom_col() +
+  facet_wrap(~grupo, scales = 'free', nrow = 2) +
+  theme(axis.text.x = element_text(size = 8, angle = 30,
+                                   vjust =  1, hjust = 1))
+  
+  
+  
+
+?reorder_within
+
+
+```
+
+
+
+### 
+ 
