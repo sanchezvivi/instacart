@@ -54,16 +54,18 @@ base_products <- read.csv(paste(path,file_products,sep = "")) %>% glimpse()
 
 
 
+# Funções -----------------------------------------------------------------
+
+x4 <- function(x) x^4
+
+x_4<- function(x) sqrt(sqrt(x))
+
+x2 <- function(x) x^2
+
+x_2<- function(x) sqrt(x)
+
+
 # Inicio Código -----------------------------------------------------------
-
-
-# CONCLUSÔES DA ANÁLISE PRÉVIA:
-# As bases order_train e order_prior são excludentes, ou seja, os order_id não possuem interseção.
-# A base 'order_prior' tem todos os seus order_id encontrados na base 'orders', bem como a base 'order_train'.
-# Existem 75k 'order_id', que pertencem a base de testes. Contudo, como essa base de teste não está disponível, podemos remover esses 75k registros.
-# AÇÕES
-# 1 - Remover 75k registros da base 'orders'.
-# 2 - As bases order_train e order_prior, poderão ser mescladas, uma vez que não iremos usar a base para predição.
 
 # Removendo os registros da tabela `orders` que estão categorizados como 'test', uma vez que essas 'order_id' não possuem dados correspondentes nas bases de product_order
 base_orders_cl <- base_orders %>% filter(eval_set != 'test')
@@ -73,7 +75,7 @@ usuarios <- base_orders_cl %>% group_by(user_id) %>% summarise(cnt = n())
 set.seed(123)
 usuarios_10 <- usuarios %>% filter(cnt > 4) %>% sample_frac(size = 0.1)
 
-write.csv(usuarios_10, "data\\user.csv")
+# write.csv(usuarios_10, "data\\user.csv")
 
 # Filtrar por um número mínimo de 5 compras ###########################################
 
@@ -155,6 +157,9 @@ base_k_user_ord <- base_ord_geral_all %>% select(user_id, order_id, order_number
                                                     rec_fat = mean(reordered))
 
 
+base_ord_geral_all %>% filter(order_id == 144358)
+
+
 # base para K-Means com os campos descritos acima
 base_k_user <- base_k_user_ord %>% 
                 group_by(user_id) %>% 
@@ -172,47 +177,71 @@ base_k_user <- base_k_user_ord %>%
 clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = 4)
 
 # Calculando os perfis dos clusters
-# dados_clusters <- (clust_kmean$centers * (clust_kmean$data %>% attr("scaled:scale"))) + (clust_kmean$data %>% attr("scaled:center"))
 
 dados_clusters <- clust_kmean$centers
 
-# A partir da análise é possível definir o perfil dos clusters, para poder dar um nome aos mesmos
-dados_clusters <- tibble(cluster = rownames(dados_clusters), nome_cluster = c("Compra_Quant","Churn","Fiel_e_Recorrente","Novo_com_Potencial")) %>% bind_cols(as_tibble(dados_clusters))
+clust_kmean$size
 
-spider <- dados_clusters %>% ggRadar(aes(x = c(n_compras,
+# A partir da análise é possível definir o perfil dos clusters, para poder dar um nome aos mesmos
+dados_clusters <- tibble(cluster = rownames(dados_clusters), nome_cluster = c("Novo_com_Potencial","Fiel_e_Recorrente","Compra_Quant","Churn")) %>% bind_cols(as_tibble(dados_clusters))
+
+(spider <- dados_clusters %>% ggRadar(aes(x = c(n_compras,
                                      t_mean,
                                      mean_prod_cart,
                                      mean_peso_cart,
                                      mean_rec_fat),
-                               facet = nome_cluster), 
+                               facet = cluster), 
                            interactive = F,
                            size = 1.5,
                            legend.position = "right"
-                           )
+                           ))
 
-x4 <- function(x) x^4
 
-x_4<- function(x) sqrt(sqrt(x))
-
-x2 <- function(x) x^2
-
-x_2<- function(x) sqrt(x)
 
 base_graf2 <- base_k_user %>%
   bind_cols(cluster = clust_kmean$cluster) %>%
-  filter(cluster == 1)
+  filter(cluster == 4)
+
+base_graf_exp <- base_k_user %>%
+  bind_cols(cluster = clust_kmean$cluster)
 
 
-barras <- base_ord_geral_all %>%
-              right_join(base_graf2 %>% select(user_id)) %>%
-              group_by(product_name) %>%
-              summarise(contagem = n()) %>%
-              arrange(desc(contagem)) %>%
-              top_n(10) %>%
-              ggplot(aes(x = reorder(product_name,desc(contagem)), y = contagem)) +
-                geom_col(color = "darkorange", fill = "darkgreen")+
-                theme(axis.text.x = element_text(angle = 90, hjust = 1))
-      # scale_y_log10()
+
+# Apresentando os dados dos clusters --------------------------------------
+base_graf_exp %>% select(-user_id) %>% group_by(cluster) %>% summarise(n_compras = mean(n_compras), 
+                                                                       t_mean = mean(t_mean), 
+                                                                       mean_prod_cart = mean(mean_prod_cart), 
+                                                                       mean_peso_cart = mean(mean_peso_cart), 
+                                                                       mean_rec_fat = mean(mean_rec_fat))
+
+
+# Exportando base para o Leo ----------------------------------------------
+
+base_graf_exp %>% write.csv("data\\base_graf_exp.csv")
+
+
+# Importando Base Leo e filtrando -----------------------------------------
+
+base_leo <- read.csv("data\\cl4.csv")
+
+base_leo <- base_leo %>% mutate(user_id = name) %>% select(user_id, cluster) %>% filter(cluster == 3) %>% tibble()
+
+base_leo %>% skim()
+
+
+# Encontrando a Interseção ------------------------------------------------
+
+intersect <- base_leo %>% inner_join(base_graf2, by = "user_id")
+
+intersect %>% select(-c(user_id,cluster.x)) %>% group_by(cluster.y) %>% summarise(n_compras = mean(n_compras), 
+                                                                       t_mean = mean(t_mean), 
+                                                                       mean_prod_cart = mean(mean_prod_cart), 
+                                                                       mean_peso_cart = mean(mean_peso_cart), 
+                                                                       mean_rec_fat = mean(mean_rec_fat))
+
+
+# Gráfico de TREEMAP ------------------------------------------------------
+
 
   # basic treemap
 p <- base_ord_geral_all %>%
@@ -236,8 +265,11 @@ p <- base_ord_geral_all %>%
 
   # make it interactive ("rootname" becomes the title of the plot):
 inter <- d3tree2(p, rootname = "Pricipais Produtos")
+inter
   
 # Resultado: falha para rodar o k_means devido ao tamanho da base
 # Próximo passo
 # criar um sample da base para isso e também ver para Kendall e Pearson (análise e seguir)
 
+
+brewer_pal(palette = "set1")
