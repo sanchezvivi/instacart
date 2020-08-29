@@ -9,7 +9,9 @@
 
 library(shiny)
 
+print(getwd())
 source('SergioG_Script5.R')
+
 source('..\\..\\instacart_palette.R')
 
 # Define UI for application that draws a histogram
@@ -89,6 +91,7 @@ server <- function(input, output) {
         #     geom_col(color = "darkorange", fill = "darkgreen")+
         #     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
         #     scale_y_log10()
+        cores <- unname(instacart_colors)
         base_ord_geral_all %>%
             right_join(base_graf2 %>% select(user_id)) %>%
             group_by(aisle, product_name) %>%
@@ -101,7 +104,7 @@ server <- function(input, output) {
                     vSize="contagem",
                     type="index",
                     # palette = "Set2",
-                    palette = unname(instacart_colors),
+                    palette = cores[1:length(cores)],
                     bg.labels=c("white"),
                     align.labels=list(
                         c("center", "center"), 
