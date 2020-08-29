@@ -6,15 +6,22 @@
 #              'klaR', 'corrplot', 'NetCluster', 'factoextra', 'maptree', 'treemap', 'DT','patchwork')
 
 biblios <- c('tidyverse', 'stringr', 'janitor', 'inspectdf', 'dplyr', 'skimr', 
-             'plotly', 'RcppRoll', 'lubridate', 'factoextra', 'forecats', 'tidymodels')
+             'plotly', 'RcppRoll', 'lubridate', 'factoextra', 'forecats', 'tidymodels', 'ggiraph')
 
-library(tidymodels)
-library(tidyverse)
 
 for (i in biblios){
   if(!require(i, character.only = TRUE)){install.packages(paste0(i)); library(i, character.only = TRUE)}
 }
 
+
+library(ggiraph)
+
+
+
+library(tidymodels)
+library(tidyverse)
+library(cluster)
+library(ggiraphExtra)
 
 theme_set(theme_minimal())
 theme_update(text = element_text(family = "Brandon Text"),
@@ -61,12 +68,18 @@ base_products <- read.csv(paste(path,file_products,sep = "")) %>% glimpse()
 # Removendo os registros da tabela `orders` que estão categorizados como 'test', uma vez que essas 'order_id' não possuem dados correspondentes nas bases de product_order
 base_orders_cl <- base_orders %>% filter(eval_set != 'test')
 
-base_orders_cl %>% group_by(user_id) %>% summarise(cnt = n())
-
-
+# Criando um sample de 10% dos usuários
+usuarios <- base_orders_cl %>% group_by(user_id) %>% summarise(cnt = n())
+set.seed(123)
+usuarios_10 <- usuarios %>% sample_frac(size = 0.1)
 
 # Mesclando as bases 'order_prior' e 'order_train'
 base_ord_geral <- dplyr::union(base_ord_prior,base_ord_train)
+
+# Usando somente os 10%
+base_orders_cl <- base_orders_cl %>% right_join(usuarios_10 %>% select(user_id))
+
+base_ord_geral <- base_ord_geral %>% right_join(base_orders_cl %>% select(order_id)) 
 
 # Fazendo um left join da base de 'base_prod' com a base de base_aisles e base_dept, para trazer os nomes dos corredores e departamentos
 base_products_names <- base_products %>% left_join(base_aisles) %>% left_join(base_dept)
@@ -88,14 +101,124 @@ base_orders_cl_mm <- base_orders_cl %>%
   ungroup() %>% 
   glimpse
 
-# Gráfico da média móvel
-# base_orders_cl_not_rec2 %>%
-#   na.omit() %>%
-#   ggplot(aes(x = days_ma)) +
-#   geom_bar(fill = 'darkgreen') +
-#   geom_vline(xintercept = 8, color = 'orange',
-#              linetype = 'dashed') +
-#   theme_minimal()
+
+
+
+# Nova Clusterização - 2020-08-25 -----------------------------------------
+
+
+
+# definindo os principais produtos em termos de recorrência
+prod_top_100 <- base_ord_geral_prod %>% 
+                  group_by(product_name) %>% 
+                  summarise(n_reordered = sum(reordered)) %>% 
+                  arrange(desc(n_reordered)) #%>% 
+                  # top_n(n = 100)
+
+
+
+
+# definindo o tempo médio entre compras de um determinado produto
+base_ord_geral_all <- base_ord_geral_prod %>% 
+  left_join(base_orders_cl %>% 
+              select(order_id, 
+                     user_id, 
+                     order_number, 
+                     days_since_prior_order)) %>% 
+  filter(!is.na(days_since_prior_order)) %>% 
+  arrange(user_id,desc(order_number))
+
+prod_mean_time <- base_ord_geral_all %>% 
+  group_by(user_id,product_name) %>% 
+  summarise(tempo_medio = (sum(days_since_prior_order)/(sum(reordered)+1))) %>% 
+  # filter(tempo_medio > 0) %>% 
+  group_by(product_name) %>% 
+  summarise(tempo_medio = mean(tempo_medio)) %>% 
+  right_join(prod_top_100) %>% 
+  arrange(tempo_medio, desc(n_reordered))
+
+
+
+prod_mean_time_norm <- prod_mean_time[,c(2:3)] %>% scale(center = F) %>% as_tibble()
+
+# base com os produtos ordenados por peso (total de recorrencias dividido pelo tempo médio entre compras desse produto)
+prod_fator <- bind_cols(prod_mean_time[,1],prod_mean_time_norm) %>% 
+                          mutate(fator = ifelse((tempo_medio == 0 | is.na(tempo_medio)), 0, n_reordered/tempo_medio)) %>% 
+                          arrange(desc(fator))
+
+prod_fator %>% summary()
+
+# clusterizar por:
+# Numerico
+#   Número de Compras
+#   Tempo Médio entre compras
+#   Número médio de produtos no carrinho
+#   Peso médio do carrinho
+#   Fator de recorrência de produtos (numero de recorrencias dividido pelo total de produtos comprados)
+
+# Criando a tabela a ser utilizada para K-means
+base_k_user_ord <- base_ord_geral_all %>% select(user_id, order_id, order_number, days_since_prior_order, add_to_cart_order, reordered, product_name) %>%
+                                          filter(!is.na(days_since_prior_order))%>% 
+                                          left_join(prod_fator %>% select(product_name, fator)) %>% 
+                                          group_by(user_id, order_id) %>% 
+                                          summarise(order_number = mean(order_number),
+                                                    days_since_prior_order = mean(days_since_prior_order),
+                                                    n_prod_cart = max(add_to_cart_order),
+                                                    peso_cart = mean(fator),
+                                                    rec_fat = mean(reordered))
+
+
+# base para K-Means com os campos descritos acima
+base_k_user <- base_k_user_ord %>% 
+                group_by(user_id) %>% 
+                summarise(n_compras = max(order_number),
+                          t_mean = mean(days_since_prior_order),
+                          mean_prod_cart = mean(n_prod_cart),
+                          mean_peso_cart = mean(peso_cart),
+                          mean_rec_fat = mean(rec_fat))
+
+# Verificando um consumidor como exemplo
+base_ord_geral_all %>% left_join(prod_fator %>% select(product_name, fator)) %>% filter(user_id == 4) %>% view()
+
+
+# rodando K-means
+clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% ?hkmeans(k = 4)
+
+
+# Calculando os perfis dos clusters
+# dados_clusters <- (clust_kmean$centers * (clust_kmean$data %>% attr("scaled:scale"))) + (clust_kmean$data %>% attr("scaled:center"))
+
+dados_clusters <- clust_kmean$centers
+
+dados_clusters <- tibble(cluster = rownames(dados_clusters)) %>% bind_cols(as_tibble(dados_clusters))
+
+dados_clusters %>% ggRadar(aes(x = c(n_compras,t_mean,mean_prod_cart,mean_peso_cart,mean_rec_fat),facet = cluster))
+
+# Resultado: falha para rodar o k_means devido ao tamanho da base
+# Próximo passo
+# criar um sample da base para isso e também ver para Kendall e Pearson (análise e seguir)
+
+
+
+# Tentativa de Cluster por Correlação Kendall e Pearson -------------------
+
+
+# Fazendo um filtro onde serão coletados os users que:
+# > possuem no mínimo 6 compras
+# > serão selecionados somente as última 5 compras (pois para os clientes com somente 6 compras, a primeira não possui valor para a 
+# variável 'days_since_prior_order')
+# OBJETIVO: Fazer uma matriz de correlação, usando Pearson e Kendall
+
+# Selecionando somente os clientes que possuem 6 compras no mínimo
+users_6 <- base_orders_cl_mm %>% group_by(user_id) %>% mutate(n_compras = max(order_number)) %>% filter(n_compras > 5)
+# Filtrando agora somente os clientes as últimas 5 compras
+user_6_compr <- users_6 %>% filter(order_number > (n_compras - 5)) %>% group_by(user_id) %>% mutate(new_ord_number = (order_number - min(order_number)+1))
+
+
+
+user_6_pivot <- user_6_compr %>% select(user_id, days_since_prior_order, new_ord_number) %>% pivot_wider(names_from = user_id,values_from = days_since_prior_order)
+
+cor(user_6_pivot,method = "kendall")
 
 
 
@@ -122,9 +245,8 @@ nrow(users_rec)
 base_orders_cl_rec <- base_orders_cl_mm %>% right_join(users_rec)
 base_orders_cl_not_rec <- base_orders_cl_mm %>% right_join(users_churn)
 
-base_ord_geral_prod_rec <- base_ord_geral_prod %>% dplyr::filter(order_id %in% base_orders_cl_rec$order_id)
-base_ord_geral_prod_not_rec <- base_ord_geral_prod %>% dplyr::filter(order_id %in% base_orders_cl_not_rec$order_id)
-
+base_ord_geral_prod_rec <- base_ord_geral_prod %>% right_join(base_orders_cl_rec)
+base_ord_geral_prod_not_rec <- base_ord_geral_prod %>% right_join(base_orders_cl_not_rec)
 
 
 # Gráficos Aisles ---------------------------------------------------------
