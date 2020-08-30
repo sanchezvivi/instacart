@@ -32,8 +32,8 @@ for (i in biblios){
 
 # Importando os dados em .csv, usando o read.csv --------------------------
 
-path <- "data\\"
-# path <- "..\\..\\data\\"
+# path <- "data\\"
+path <- "..\\..\\data\\"
 file_aisles <- "aisles.csv"
 base_aisles <- read.csv(paste(path,file_aisles,sep = ""))
 
@@ -107,6 +107,10 @@ prod_top_100 <- base_ord_geral_prod %>%
 
 
 
+base_ord_geral_all %>% select(user_id,order_number,order_id,add_to_cart_order,product_name) %>% filter(user_id == 22) %>% arrange(user_id, order_number) %>% View()
+
+
+
 
 # definindo o tempo médio entre compras de um determinado produto
 base_ord_geral_all <- base_ord_geral_prod %>% 
@@ -173,8 +177,65 @@ base_k_user <- base_k_user_ord %>%
 # base_ord_geral_all %>% left_join(prod_fator %>% select(product_name, fator)) %>% filter(user_id == 4) %>% view()
 
 
+# Buscando melhor k para clusterização
+fator_vet <- tibble(k = numeric(), fator = numeric(), variacao = numeric(), media = numeric(), singulares = numeric())
+fator_atual <- 1
+for (i in 2:20){
+  print(i)
+  k_mean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = i)
+  fator_ant = fator_atual
+  fator_atual = (k_mean$tot.withinss/k_mean$betweenss)
+  sing <- nrow(as_tibble(k_mean$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
+  if (i > 11){
+    med <- mean(fator_vet$variacao[i-10:i])
+    fator_vet <- fator_vet %>% bind_rows(c(k = i, fator = fator_atual, variacao = ((fator_atual - fator_ant)/fator_ant), media = med, singulares = sing))
+  }
+  else{
+    fator_vet <- fator_vet %>% bind_rows(c(k = i, fator = fator_atual, variacao = ((fator_atual - fator_ant)/fator_ant), media = NA, singulares = sing))
+  }
+}
+
+# Encontrando o primeiro 'k' que possui a média da variação dos últimos 10 valores > -0.1. Ao encontrar esse 'k', podemos escolher valores até dez 'k's anteriores. 
+k_max <- fator_vet$k[min(which((fator_vet$media > -0.1) == TRUE))]
+k_min <- k_max - 9
+
+# Gráficos k
+fator_vet %>% ggplot(aes(x = k)) +
+  geom_line(aes(y = fator), color = "blue") + 
+  labs(title = "Gráfico de Fator (dist_Intra_Cluster / dist_Inter_Cluster) pelo número de clusters") +
+  theme_minimal()+
+  theme(title = element_text(size = 7))
+
+fator_vet %>% ggplot(aes(x = k)) +
+  geom_line(aes(y = variacao), color = "blue") + 
+  geom_hline(yintercept = -0.10, linetype = "dotted") +
+  geom_hline(yintercept = 0.0) +
+  geom_rect(aes(xmin = k_min, xmax = k_max, ymin = -0.1, ymax = 0), alpha = 1/500, color = "red", fill = "green") +
+  geom_vline(xintercept = c(k_min, k_max), show.legend = TRUE, linetype = "dashed") +
+  geom_line(aes(y = singulares/40), color = "red") + 
+  scale_y_continuous(
+    name = "Variação Fator intra/inter Cluster",
+    sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
+  )
+
+fator_vet[1:(nrow(fator_vet)/2),] %>% ggplot(aes(x = k)) +
+  geom_line(aes(y = variacao), color = "blue") + 
+  geom_hline(yintercept = -0.10, linetype = "dotted") +
+  geom_hline(yintercept = 0.0) +
+  geom_rect(aes(xmin = k_min, xmax = k_max, ymin = -0.1, ymax = 0), alpha = 1/500, color = "red", fill = "green") +
+  geom_vline(xintercept = c(k_min, k_max), show.legend = TRUE, linetype = "dashed") +
+  geom_line(aes(y = singulares/40), color = "red") + 
+  scale_y_continuous(
+    name = "Variação Fator intra/inter Cluster",
+    sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
+  )
+
+
+
 # rodando K-means
-clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = 4)
+
+best_k <- 7
+clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale(center = F) %>% hkmeans(k = best_k)
 
 # Calculando os perfis dos clusters
 
@@ -183,7 +244,7 @@ dados_clusters <- clust_kmean$centers
 clust_kmean$size
 
 # A partir da análise é possível definir o perfil dos clusters, para poder dar um nome aos mesmos
-dados_clusters <- tibble(cluster = rownames(dados_clusters), nome_cluster = c("Novo_com_Potencial","Fiel_e_Recorrente","Compra_Quant","Churn")) %>% bind_cols(as_tibble(dados_clusters))
+dados_clusters <- tibble(cluster = rownames(dados_clusters)) %>% bind_cols(as_tibble(dados_clusters))
 
 (spider <- dados_clusters %>% ggRadar(aes(x = c(n_compras,
                                      t_mean,
