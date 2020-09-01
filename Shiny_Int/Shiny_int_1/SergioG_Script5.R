@@ -32,8 +32,8 @@ for (i in biblios){
 
 # Importando os dados em .csv, usando o read.csv --------------------------
 
-# path <- "data\\"
-path <- "..\\..\\data\\"
+path <- "data\\"
+# path <- "..\\..\\data\\"
 file_aisles <- "aisles.csv"
 base_aisles <- read.csv(paste(path,file_aisles,sep = ""))
 
@@ -290,15 +290,15 @@ base_leo <- base_leo %>% mutate(user_id = name) %>% select(user_id, cluster) %>%
 base_leo %>% skim()
 
 
-# Encontrando a Interseção ------------------------------------------------
-
-intersect <- base_leo %>% inner_join(base_graf2, by = "user_id")
-
-intersect %>% select(-c(user_id,cluster.x)) %>% group_by(cluster.y) %>% summarise(n_compras = mean(n_compras), 
-                                                                       t_mean = mean(t_mean), 
-                                                                       mean_prod_cart = mean(mean_prod_cart), 
-                                                                       mean_peso_cart = mean(mean_peso_cart), 
-                                                                       mean_rec_fat = mean(mean_rec_fat))
+# # Encontrando a Interseção ------------------------------------------------
+# 
+# intersect <- base_leo %>% inner_join(base_graf2, by = "user_id")
+# 
+# intersect %>% select(-c(user_id,cluster.x)) %>% group_by(cluster.y) %>% summarise(n_compras = mean(n_compras), 
+#                                                                        t_mean = mean(t_mean), 
+#                                                                        mean_prod_cart = mean(mean_prod_cart), 
+#                                                                        mean_peso_cart = mean(mean_peso_cart), 
+#                                                                        mean_rec_fat = mean(mean_rec_fat))
 
 
 # Gráfico de TREEMAP ------------------------------------------------------
@@ -331,6 +331,3 @@ inter
 # Resultado: falha para rodar o k_means devido ao tamanho da base
 # Próximo passo
 # criar um sample da base para isso e também ver para Kendall e Pearson (análise e seguir)
-
-
-brewer_pal(palette = "set1")
