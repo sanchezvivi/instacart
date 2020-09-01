@@ -18,7 +18,7 @@ source('..\\..\\instacart_palette.R')
 ui <- fluidPage(
 
     # Application title
-    titlePanel("Instacar"),
+    titlePanel("Instacart"),
 
     # Sidebar with a slider input for number of bins 
     sidebarLayout(

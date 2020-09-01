@@ -20,12 +20,12 @@ for (i in biblios){
 
 
 # install.packages("remotes")
-# remotes::install_github("timelyportfolio/d3treeR")
+#remotes::install_github("timelyportfolio/d3treeR")
 # 
 # install.packages('treemap')
-# library(treemap)
-# 
-# library(d3treeR)
+library(treemap)
+ 
+library(d3treeR)
 # 
 # library(ggiraphExtra)
 
