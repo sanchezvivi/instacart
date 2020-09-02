@@ -13,25 +13,25 @@ library(ggiraphExtra)
 
 # Importando os dados em .csv, usando o read.csv --------------------------
 
-#path <- "data/"
-## path <- "..\\..\\data\\"
-#file_aisles <- "aisles.csv"
-#base_aisles <- read.csv(paste(path,file_aisles,sep = ""))
-#
-#file_dept <- "departments.csv"
-#base_dept <- read.csv(paste(path,file_dept,sep = ""))
-#
-#file_ord_prior <- "order_products__prior.csv"
-#base_ord_prior <- read.csv(paste(path,file_ord_prior,sep = "")) %>% glimpse()
-#
-#file_ord_train <- "order_products__train.csv"
-#base_ord_train <- read.csv(paste(path,file_ord_train,sep = "")) %>% glimpse()
-#
-#file_orders <- "orders.csv"
-#base_orders <- read.csv(paste(path,file_orders,sep = "")) %>% glimpse()
-#
-#file_products <- "products.csv"
-#base_products <- read.csv(paste(path,file_products,sep = "")) %>% glimpse()
+# path <- "data/"
+path <- "..\\data\\"
+file_aisles <- "aisles.csv"
+base_aisles <- read.csv(paste(path,file_aisles,sep = ""))
+
+file_dept <- "departments.csv"
+base_dept <- read.csv(paste(path,file_dept,sep = ""))
+
+file_ord_prior <- "order_products__prior.csv"
+base_ord_prior <- read.csv(paste(path,file_ord_prior,sep = ""))
+
+file_ord_train <- "order_products__train.csv"
+base_ord_train <- read.csv(paste(path,file_ord_train,sep = ""))
+
+file_orders <- "orders.csv"
+base_orders <- read.csv(paste(path,file_orders,sep = ""))
+
+file_products <- "products.csv"
+base_products <- read.csv(paste(path,file_products,sep = ""))
 #
 #
 #

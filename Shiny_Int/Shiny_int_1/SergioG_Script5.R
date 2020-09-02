@@ -23,6 +23,7 @@ for (i in biblios){
 #remotes::install_github("timelyportfolio/d3treeR")
 # 
 # install.packages('treemap')
+
 library(treemap)
  
 library(d3treeR)
@@ -178,61 +179,65 @@ base_k_user <- base_k_user_ord %>%
 
 
 # Buscando melhor k para clusterização
-fator_vet <- tibble(k = numeric(), fator = numeric(), variacao = numeric(), media = numeric(), singulares = numeric())
-fator_atual <- 1
-for (i in 2:20){
-  print(i)
-  k_mean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = i)
-  fator_ant = fator_atual
-  fator_atual = (k_mean$tot.withinss/k_mean$betweenss)
-  sing <- nrow(as_tibble(k_mean$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
-  if (i > 11){
-    med <- mean(fator_vet$variacao[i-10:i])
-    fator_vet <- fator_vet %>% bind_rows(c(k = i, fator = fator_atual, variacao = ((fator_atual - fator_ant)/fator_ant), media = med, singulares = sing))
-  }
-  else{
-    fator_vet <- fator_vet %>% bind_rows(c(k = i, fator = fator_atual, variacao = ((fator_atual - fator_ant)/fator_ant), media = NA, singulares = sing))
-  }
-}
-
-# Encontrando o primeiro 'k' que possui a média da variação dos últimos 10 valores > -0.1. Ao encontrar esse 'k', podemos escolher valores até dez 'k's anteriores. 
-k_max <- fator_vet$k[min(which((fator_vet$media > -0.1) == TRUE))]
-k_min <- k_max - 9
-
-# Gráficos k
-fator_vet %>% ggplot(aes(x = k)) +
-  geom_line(aes(y = fator), color = "blue") + 
-  labs(title = "Gráfico de Fator (dist_Intra_Cluster / dist_Inter_Cluster) pelo número de clusters") +
-  theme_minimal()+
-  theme(title = element_text(size = 7))
-
-fator_vet %>% ggplot(aes(x = k)) +
-  geom_line(aes(y = variacao), color = "blue") + 
-  geom_hline(yintercept = -0.10, linetype = "dotted") +
-  geom_hline(yintercept = 0.0) +
-  geom_rect(aes(xmin = k_min, xmax = k_max, ymin = -0.1, ymax = 0), alpha = 1/500, color = "red", fill = "green") +
-  geom_vline(xintercept = c(k_min, k_max), show.legend = TRUE, linetype = "dashed") +
-  geom_line(aes(y = singulares/40), color = "red") + 
-  scale_y_continuous(
-    name = "Variação Fator intra/inter Cluster",
-    sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
-  )
-
-fator_vet[1:(nrow(fator_vet)/2),] %>% ggplot(aes(x = k)) +
-  geom_line(aes(y = variacao), color = "blue") + 
-  geom_hline(yintercept = -0.10, linetype = "dotted") +
-  geom_hline(yintercept = 0.0) +
-  geom_rect(aes(xmin = k_min, xmax = k_max, ymin = -0.1, ymax = 0), alpha = 1/500, color = "red", fill = "green") +
-  geom_vline(xintercept = c(k_min, k_max), show.legend = TRUE, linetype = "dashed") +
-  geom_line(aes(y = singulares/40), color = "red") + 
-  scale_y_continuous(
-    name = "Variação Fator intra/inter Cluster",
-    sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
-  )
+# fator_vet <- tibble(k = numeric(), fator = numeric(), variacao = numeric(), media = numeric(), singulares = numeric())
+# fator_atual <- 1
+# for (i in 2:20){
+#   print(i)
+#   k_mean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = i)
+#   fator_ant = fator_atual
+#   fator_atual = (k_mean$tot.withinss/k_mean$betweenss)
+#   sing <- nrow(as_tibble(k_mean$cluster) %>% group_by(value) %>% count() %>% filter(n == 1))
+#   if (i > 11){
+#     med <- mean(fator_vet$variacao[i-10:i])
+#     fator_vet <- fator_vet %>% bind_rows(c(k = i, fator = fator_atual, variacao = ((fator_atual - fator_ant)/fator_ant), media = med, singulares = sing))
+#   }
+#   else{
+#     fator_vet <- fator_vet %>% bind_rows(c(k = i, fator = fator_atual, variacao = ((fator_atual - fator_ant)/fator_ant), media = NA, singulares = sing))
+#   }
+# }
+# 
+# # Encontrando o primeiro 'k' que possui a média da variação dos últimos 10 valores > -0.1. Ao encontrar esse 'k', podemos escolher valores até dez 'k's anteriores. 
+# k_max <- fator_vet$k[min(which((fator_vet$media > -0.1) == TRUE))]
+# k_min <- k_max - 9
+# 
+# # Gráficos k
+# fator_vet %>% ggplot(aes(x = k)) +
+#   geom_line(aes(y = fator), color = "darkgreen") + 
+#   labs(title = "Gráfico de Fator (dist_Intra_Cluster / dist_Inter_Cluster) pelo número de clusters") +
+#   theme_minimal()+
+#   geom_vline(xintercept = c(7, 9), show.legend = TRUE, linetype = "dashed", color = 'darkorange', size = 1)+
+#   geom_text(aes(x = 7.2, y = 1, label = '7'),hjust = 0, color = 'darkorange')+
+#   geom_text(aes(x = 9.2, y = 1, label = '9'),hjust = 0, color = 'darkorange')+
+#   theme(title = element_text(size = 7),axis.title.x = element_text(size = 10), axis.title.y = element_text(size = 10))
+# 
+# fator_vet %>% ggplot(aes(x = k)) +
+#   geom_line(aes(y = variacao), color = "blue") + 
+#   geom_hline(yintercept = -0.10, linetype = "dotted") +
+#   geom_hline(yintercept = 0.0) +
+#   geom_rect(aes(xmin = k_min, xmax = k_max, ymin = -0.1, ymax = 0), alpha = 1/500, color = "red", fill = "green") +
+#   geom_vline(xintercept = c(k_min, k_max), show.legend = TRUE, linetype = "dashed") +
+#   geom_line(aes(y = singulares/40), color = "red") + 
+#   scale_y_continuous(
+#     name = "Variação Fator intra/inter Cluster",
+#     sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
+#   )
+# 
+# fator_vet[1:(nrow(fator_vet)/2),] %>% ggplot(aes(x = k)) +
+#   geom_line(aes(y = variacao), color = "blue") + 
+#   geom_hline(yintercept = -0.10, linetype = "dotted") +
+#   geom_hline(yintercept = 0.0) +
+#   geom_rect(aes(xmin = k_min, xmax = k_max, ymin = -0.1, ymax = 0), alpha = 1/500, color = "red", fill = "green") +
+#   geom_vline(xintercept = c(k_min, k_max), show.legend = TRUE, linetype = "dashed") +
+#   geom_line(aes(y = singulares/40), color = "red") + 
+#   scale_y_continuous(
+#     name = "Variação Fator intra/inter Cluster",
+#     sec.axis = sec_axis(trans =~.*40, name = "n_Sing_Clust")
+#   )
 
 
 
 # rodando K-means
+
 
 best_k <- 7
 clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale(center = F) %>% hkmeans(k = best_k)
@@ -261,7 +266,7 @@ dados_clusters <- tibble(cluster = rownames(dados_clusters)) %>% bind_cols(as_ti
 
 base_graf2 <- base_k_user %>%
   bind_cols(cluster = clust_kmean$cluster) %>%
-  filter(cluster == 4)
+  filter(cluster == 5)
 
 base_graf_exp <- base_k_user %>%
   bind_cols(cluster = clust_kmean$cluster)
@@ -283,22 +288,45 @@ base_graf_exp %>% write.csv("data\\base_graf_exp.csv")
 
 # Importando Base Leo e filtrando -----------------------------------------
 
-base_leo <- read.csv("data\\cl4.csv")
+base_leo <- read.csv("data\\data_L.csv") %>% tibble()
 
-base_leo <- base_leo %>% mutate(user_id = name) %>% select(user_id, cluster) %>% filter(cluster == 3) %>% tibble()
+base_leo <- base_leo %>% select(user_id, cluster) %>% filter(cluster == 3)
 
 base_leo %>% skim()
 
 
 # # Encontrando a Interseção ------------------------------------------------
-# 
-# intersect <- base_leo %>% inner_join(base_graf2, by = "user_id")
-# 
-# intersect %>% select(-c(user_id,cluster.x)) %>% group_by(cluster.y) %>% summarise(n_compras = mean(n_compras), 
-#                                                                        t_mean = mean(t_mean), 
-#                                                                        mean_prod_cart = mean(mean_prod_cart), 
-#                                                                        mean_peso_cart = mean(mean_peso_cart), 
-#                                                                        mean_rec_fat = mean(mean_rec_fat))
+
+intersect <- base_leo %>% inner_join(base_graf2, by = "user_id")
+
+intersect %>% 
+  select(-c(user_id,cluster.x)) %>% 
+  group_by(cluster.y) %>% 
+  summarise(n_compras = mean(n_compras),
+               t_mean = mean(t_mean),
+               mean_prod_cart = mean(mean_prod_cart),
+               mean_peso_cart = mean(mean_peso_cart),
+               mean_rec_fat = mean(mean_rec_fat))
+  
+
+
+
+# Cluster Sérgio - Cluster 5
+# numero de usuários 3851
+base_graf2 %>% nrow()
+
+# Cluster Leo - Cluster 3
+# numero de usuários = 3430
+base_leo %>% nrow()
+
+# Interseção entre os clusters: 1836
+intersect %>% nrow()
+1836/3430
+
+# Total: 206209
+# Amostra: 17507
+# Percentual: 8,5%
+
 
 
 # Gráfico de TREEMAP ------------------------------------------------------
