@@ -1,0 +1,394 @@
+---
+title: 'Comprações'
+author: "Groupo 2"
+date: "31/08/2020"
+output: 
+  html_document:
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include=TRUE,message=FALSE,
+                      warning=FALSE, echo = FALSE)
+```
+
+```{r,include=FALSE}
+rm(list=ls())
+setwd("C:/Users/leona/OneDrive/Insper/AI/instacart")
+options(warn=-1)
+
+set.seed(1)
+```
+
+# Bibliotecas
+```{r,include=TRUE}
+library(tidyverse)
+library(DT)
+library(formattable)
+library(data.table)
+library(ggplot2)
+library(plotly)
+library(patchwork)
+library(fmsb)
+library(viridis)
+library(corrplot)
+library(GGally)
+
+require(dplyr)
+library(skimr)
+
+library(nlme)
+library(factoextra)
+
+library(inspectdf)
+
+```
+
+# Datas
+```{r}
+data <- read.csv("df_join_S2.csv")
+data$X <- NULL
+
+data_S2 <- read.csv("data_S2.csv")
+data_S2$X <- NULL
+
+data_L <- read.csv("data_L.csv")
+data_L$X <- NULL
+data_L$x <- NULL
+data_L$y <- NULL
+data_L$coord <- NULL
+
+```
+
+# format_table 
+```{r format_table }
+pca_out <- function(data){
+      data[] <- lapply(data,as.numeric)
+
+        #######PCA
+    pca_data<- prcomp(scale(data))
+
+    pca_dim12 <- fviz_pca_var(pca_data,
+             col.var = "contrib", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE)
+    print(pca_dim12)
+}
+
+format_table_out <- function(data,ng,char,filtro){
+   
+    data[] <- lapply(data,as.numeric)
+
+       kmeans <- kmeans(scale(data),ng)
+    ################ print cluster
+   clu <- factoextra ::fviz_cluster(kmeans,scale(data),
+                                 repel=TRUE,
+                                 geom="point",
+                                 #xlab=" ",
+                                 #ylab=" ",
+                                 main=NULL,
+                                 show.clust.cent = TRUE)
+   print(clu)
+   ################# tabela 
+
+    x <- kmeans$cluster
+  x <- data.frame(x)
+   x<-  x %>% 
+      rename("cluster"="x")
+   x$user_id <- rownames(x)
+  data$user_id <- rownames(data)
+  data <- merge(x=data,y=x,by="user_id",all = TRUE)
+  data$user_id <- NULL
+
+if (char=="mean"){
+ out <- data %>% 
+  group_by(cluster) %>% 
+  summarise_if(is.numeric, mean)
+}
+  
+if (char=="median"){
+ out <- data %>% 
+  group_by(cluster) %>% 
+  summarise_if(is.numeric, median)
+}
+ 
+if (char=="sd"){
+ out <- data %>% 
+  group_by(cluster) %>% 
+  summarise_if(is.numeric, sd)
+}
+  
+  if (char=="cv"){
+ out_sd <- data %>% 
+  group_by(cluster) %>% 
+  summarise_if(is.numeric, sd)
+ 
+  out_mean <- data %>% 
+  group_by(cluster) %>% 
+  summarise_if(is.numeric, mean)
+  
+   out <- out_sd/out_mean
+   }
+  
+
+out <- round(out,digits = 2)
+#names(out)[which(names(out)=="cluster")]=paste("cluster (",var,")")
+
+  bom_G <- "green"
+  ruim_G<- "orange" ###_Grande
+
+bom_P <- "orange"
+ruim_P <- "green" ### _Pequeno
+menos <- color_tile(ruim_P,bom_P)
+mais <- color_tile(ruim_G,bom_G)
+
+if (filtro == 0){
+  out <- formattable(out,list(
+    "n_compras"=mais,
+    "mean_P"=mais,
+    "alpha_P"= mais,
+    "inter_P"= mais,
+    "mean_D"=menos,
+    "alpha_D"= menos,
+    "inter_D"= menos,
+    "mean_peso_cart"=mais,
+    "mean_rec_fat"=mais ))
+  
+  out$n_compras <- round(out$n_compras,digits=0)
+  out$inter_P<- round(out$inter_P,digits=0)
+  out$mean_P<- round(out$mean_P,digits=0)
+
+    out
+return(out)
+}
+
+if (filtro == "Tempo"){
+  out <- formattable(out,list(
+    "n_compras"=mais,
+    "mean_D"=menos,
+    "alpha_D"= menos,
+    "inter_D"= menos
+    ))
+  out$n_compras <- round(out$n_compras,digits=0)
+    out
+return(out)
+}
+
+if (filtro == "Quantidade"){
+  out <- formattable(out,list(
+    "n_compras"=mais,
+    "mean_P"=mais,
+    "alpha_P"= mais,
+    "inter_P"= mais
+   ))
+  
+  out$n_compras <- round(out$n_compras,digits=0)
+  out$inter_P<- round(out$inter_P,digits=0)
+  out$mean_P<- round(out$mean_P,digits=0)
+    out
+return(out)
+}
+
+if (filtro == "Sérgio"){
+  out <- formattable(out,list(
+    "n_compras"=mais,
+    "mean_D"=menos,
+    "mean_P"=mais,
+    "mean_peso_cart"=mais,
+    "mean_rec_fat"=mais ))
+  
+  out$n_compras <- round(out$n_compras,digits=0)
+  out
+return(out)
+}
+}
+```
+
+# data_new: data_L + data_S + mean_P
+```{r,echo = TRUE}
+data_new <- merge(subset(data_L, select = -c(cluster) ),
+                  subset(data_S2, select = -c(cluster) ),by="user_id")
+
+data_new$inter_P <- round(data_new$inter_P,0)
+
+data_new <- data_new %>% 
+  rename("mean_D"="t_mean") %>% 
+  rename("mean_P"="mean_prod_cart")
+
+
+
+
+data_new<- column_to_rownames(data_new,var ="user_id")
+
+data_new <- data_new[c("n_compras",
+                       "mean_P",
+                       "inter_P",
+                       "alpha_P",
+                       "mean_D",
+                       "inter_D",
+                       "alpha_D",
+                       "mean_peso_cart",
+                       "mean_rec_fat")]
+
+```
+
+```{r funções tempo}
+kmean_plot <- function(df,ng){
+  df <- na.omit(df)
+  df <- scale(df)
+  km <-  kmeans(df, ng)
+  clu <- factoextra ::fviz_cluster(km,df,
+                                   repel=TRUE,
+                                   geom="point",
+                                   #xlab=" ",
+                                   #ylab=" ",
+                                   main=NULL,
+                                   show.clust.cent = TRUE)
+  print(clu)
+}
+```
+# N_compras versus alphas 
+```{r }
+data_new %>% 
+  ggplot(aes(x=n_compras))+
+  geom_density()
+```
+
+## alpha_D 
+```{r alpha_D}
+data_new %>% 
+  group_by(n_compras) %>% 
+  summarise(alpha_D=mean(alpha_D)) %>% 
+  ggplot(aes(x=n_compras,y=alpha_D))+
+  geom_col()+
+  ylab("alpha_D (mean)")
+
+data_new %>% 
+  group_by(n_compras) %>% 
+  summarise(alpha_D=sd(alpha_D)) %>% 
+  ggplot(aes(x=n_compras,y=alpha_D))+
+  geom_col()+
+  ylab("alpha_D (sd)")
+```
+
+## alpha_P 
+```{r alpha_P}
+data_new %>% 
+  group_by(n_compras) %>% 
+  summarise(alpha_P=mean(alpha_P)) %>% 
+  ggplot(aes(x=n_compras,y=alpha_P))+
+  geom_col()+
+ ylab("alpha_P (mean)")
+
+data_new %>% 
+  group_by(n_compras) %>% 
+  summarise(alpha_P=sd(alpha_P)) %>% 
+  ggplot(aes(x=n_compras,y=alpha_P))+
+  geom_col()+
+ ylab("alpha_P (sd)")
+```
+
+# data_new ajustada (data_new2)
+```{r data_new2,echo = TRUE}
+data_new2 <- data_new %>% 
+  filter(n_compras<= 50)
+
+skim(data_new2)
+```
+
+# kmeans
+## Tempo
+```{r tempo}
+vars_T <- c("n_compras" ,
+           "mean_D",
+          "inter_D",
+          "alpha_D")
+
+pca_out(data_new2[vars_T])
+```
+
+### n=3
+```{r T3}
+format_table_out(data_new2[vars_T],3,"mean","Tempo")
+```
+
+### n=4
+```{r T4}
+format_table_out(data_new2[vars_T],4,"mean","Tempo")
+```
+
+### n=5
+```{r T5}
+format_table_out(data_new2[vars_T],5,"mean","Tempo")
+```
+
+## Quanidade
+```{r quantidade}
+vars_Q <- c("n_compras" ,
+           "mean_P",
+          "inter_P",
+          "alpha_P")
+
+pca_out(data_new2[vars_Q])
+```
+
+### n=3
+```{r Q3}
+format_table_out(data_new2[vars_Q],3,"mean","Quantidade")
+```
+
+### n=4
+```{r Q4}
+format_table_out(data_new2[vars_Q],4,"mean","Quantidade")
+```
+
+### n=5
+```{r Q5}
+format_table_out(data_new2[vars_Q],5,"mean","Quantidade")
+```
+
+## Sérgio
+```{r S}
+vars_S <- c("n_compras" ,
+            "mean_D",
+            "mean_P",
+           "mean_peso_cart" ,
+           "mean_rec_fat" )
+
+pca_out(data_new2[vars_S])
+```
+
+### n=3
+```{r S3}
+format_table_out(data_new2[vars_S],3,"mean","Sérgio")
+```
+
+### n=4
+```{r tempoS4}
+format_table_out(data_new2[vars_S],4,"mean","Sérgio")
+```
+
+### n=5
+```{r tempoS5}
+format_table_out(data_new2[vars_S],5,"mean","Sérgio")
+```
+
+## Todas variáves
+```{r tudo}
+pca_out(data_new2)
+```
+
+### n=3
+```{r tudo3}
+format_table_out(data_new2,3,"mean",0)
+```
+
+### n=4
+```{r tudo4}
+format_table_out(data_new2,4,"mean",0)
+```
+
+### n=5
+```{r tudo5}
+format_table_out(data_new2,5,"mean",0)
+```
