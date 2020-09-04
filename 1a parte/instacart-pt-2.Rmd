@@ -50,7 +50,6 @@ source('instacart_palette.R')
 options(pillar.sigfig = 1)
 ```
 
-
 ```{r Importa, include=FALSE, fig.align = 'center'}
 # Arquivos ---------------------------------------------------
 

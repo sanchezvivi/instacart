@@ -36,7 +36,6 @@ library(ggrepel)
 library(ggthemes)
 library(lubridate)
 library(grid)
-library(plotly)
 library(RcppRoll)
 library(extrafont)
 
@@ -64,16 +63,144 @@ departments_raw <- read_csv(arquivos[2])
 
 op_prior_raw <- read_csv(arquivos[3])
 
-#op_train_raw <- read_csv(arquivos[4])
+op_train_raw <- read_csv(arquivos[4])
 
 orders_raw <- read_csv(arquivos[5])
 
 products_raw <- read_csv(arquivos[6])
 
+clusters_raw <- read_csv('output/cl4.csv')
 
 ```
 
-## Ajuste da base
+
+```{r}
+
+clusters <- clusters_raw %>% 
+  rename('user_id' = name) %>% 
+  select(user_id, cluster) %>% 
+  mutate(cluster_name = case_when(cluster == 4 ~ 'Rafaela',
+                           cluster <= 2 ~ 'Recorrente',
+                           cluster == 3 ~ 'Churn',
+                           is.na(cluster) ~ 'Indefinido'),
+         cluster_name = factor(cluster_name, 
+                                   levels = c('Rafaela', 'Recorrente' , 'Churn', 'Indefinido'), 
+                                   ordered = TRUE))
+
+
+
+skim(clusters)
+```
+
+
+### Gráficos Bot --------------------
+
+## df_join
+
+```{r}
+
+orders_prior <- op_prior_raw %>% 
+  left_join(products_raw, by = 'product_id') %>% 
+  left_join(departments_raw, by = 'department_id') %>% 
+  left_join(orders_raw, by = 'order_id') %>% 
+  left_join(clusters, by = 'user_id') #%>% replace_na(days_since_prior, 0)
+
+
+orders_train <- op_train_raw %>% 
+  left_join(products_raw, by = 'product_id') %>% 
+  left_join(departments_raw, by = 'department_id') %>% 
+  left_join(orders_raw, by = 'order_id') %>% 
+  left_join(clusters, by = 'user_id') #%>% replace_na(days_since_prior, 0)
+
+orders_train %>% 
+  inspect_na()
+
+
+```
+
+
+#### Filtro cliente
+
+## Funções (bot)
+
+```{r}
+
+get_most_ordered_products <- function(df_base, u_id){
+  
+ cart <- df_base %>% 
+  filter(user_id == u_id) %>% 
+  group_by(product_name) %>% 
+  summarise(qtde = n()) %>% 
+  arrange(desc(qtde)) %>% 
+  top_n(15)
+ 
+return(cart)
+ 
+}
+
+get_last_order_products <- function(df_base, u_id){
+  
+orders <- df_base %>% 
+    filter(user_id == 202279) %>% 
+    select(order_number, order_id, days_since_prior_order) %>% 
+    group_by(order_number, order_id) %>% 
+    summarise(days_since_last = mean(days_since_prior_order)) %>% 
+    arrange(desc(order_number))
+
+last_order_id <- orders$order_id[1]
+  
+cart <- df_base %>% 
+    filter(user_id == u_id) %>% 
+    filter(order_id == last_order_id) %>% 
+    group_by(product_name) %>% 
+    summarise(qtde = n()) %>% 
+    arrange(desc(qtde))
+
+return(cart)
+  
+}
+
+
+```
+
+#### Gráficos ---------
+
+```{r}
+
+orders_prior %>% 
+  filter(user_id == 202279) %>% 
+  group_by(product_name) %>% 
+  summarise(qtde = n()) %>% 
+  arrange(desc(qtde))%>% 
+  top_n(15)
+
+orders <- orders_prior %>% 
+    filter(user_id == 202279) %>% 
+    #select(order_number, order_id, days_since_prior_order) %>% 
+    group_by(order_number, order_id) %>% 
+    summarise(days_since_last = mean(days_since_prior_order, na.rm = T)) %>% 
+    arrange(desc(order_number))
+    
+orders_prior %>% 
+  #mutate(if_else(is.na(cluster_name), 'Indefinido', cluster_name)) %>% 
+  group_by(cluster_name, order_number) %>% 
+  #filter(user_id == 202279) %>%
+  summarise(days_since_last = mean(days_since_prior_order, na.rm = T)) %>% 
+  ggplot(aes(x = order_number, y = days_since_last, color = cluster_name))+ 
+  geom_line() +
+  geom_hline(aes(yintercept = 10), linetype = 'dashed', show.legend = F) +
+  scale_color_instacart(palette = 'clusters') +
+  labs(x = 'Ordem do pedido', y = 'Dias desde a última compra', 
+       color = 'Cluster')
+  
+
+
+```
+
+
+### Análise exploratória ----------------
+
+## Ajuste da base --------
 
 ```{r}
 
@@ -97,10 +224,39 @@ orders <- orders_raw %>%
 
 ```{r}
 
+orders_test <- orders_raw %>% 
+  filter(eval_set == 'test') %>% 
+  filter(order_number != 1) %>% 
+  arrange(user_id, order_number) %>% 
+  mutate(order_hour_of_day = as.numeric(order_hour_of_day),
+         w_day = wday(if_else(order_dow == 0, 7, order_dow), label = TRUE)
+         #days_since_prior_order = if_else(is.na(days_since_prior_order), 0,
+                                          #days_since_prior_order)
+         ) %>% 
+  group_by(user_id) %>% 
+  mutate(days_ma = roll_mean(days_since_prior_order, 5, fill = NA, na.rm = T)) %>% 
+  ungroup() %>% 
+  glimpse
+
+
+users_test <- orders_test %>% 
+  #filter(days_since_prior_order < 30) %>% 
+  group_by(user_id) %>% 
+  count() %>% 
+  transmute(compras = n) %>% 
+  arrange(desc(user_id))
+
+
+```
+
+
+
+```{r}
+
 hist_ma <- orders %>% 
   na.omit() %>% 
   ggplot(aes(x = days_ma)) +
-  geom_bar(fill = ic_cols('dark-green')) +
+  geom_bar(fill = ic_cols('gray')) +
   geom_vline(xintercept = 8, color = ic_cols('orange'), 
              linetype = 'dashed', size = 0.8) +
   scale_y_continuous(label = scales::label_number_si()) +
@@ -112,7 +268,7 @@ ggplotly(hist_ma)
 ```
 
 
-## Grupo de usuários que fizeram menos de 10 compras
+## Grupo de usuários que fizeram menos de 10 compras ------
 
 ```{r}
 
@@ -129,7 +285,8 @@ orders2 <- orders %>%
                            days_ma < 30 ~ 'Alvo',
                            days_ma >= 30 ~ 'Indefinido',
                            is.na(days_ma) ~ 'Indefinido'),
-         grupo = factor(grupo, levels = c('Recorrente', 'Alvo','Indefinido'), ordered = TRUE))
+         grupo = factor(grupo, levels = c('Recorrente', 'Alvo','Indefinido'), 
+                        ordered = TRUE))
 
 orders2 %>% 
   group_by(grupo) %>% 
@@ -149,9 +306,9 @@ orders2 %>%
 
 ```
 
-# Graficos
+# Graficos -------
 
-## Frequência de compra
+## Frequência de compra -------
 
 ```{r}
 
@@ -164,8 +321,7 @@ orders2 %>%
   scale_y_continuous(labels = scales::percent_format()) +
   scale_color_instacart() +
   labs(title = 'Frequência total de pedidos',
-       x = 'Dia da semana') + 
-  theme_minimal()
+       x = 'Dia da semana')
 
 
 orders2 %>% 
