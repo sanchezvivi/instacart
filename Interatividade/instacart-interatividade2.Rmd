@@ -1,0 +1,528 @@
+---
+title: "Instacart"
+output: 
+  flexdashboard::flex_dashboard:
+    logo: logo_.png
+    orientation: rows
+    vertical_layout: fill
+    theme: lumen
+    runtime: shiny
+---
+
+
+```{r setup, include=FALSE}
+
+
+# wd <- getwd()
+# 
+# setwd("/Users/vivi/Documents/Data Science/Insper/3 Integradora/instacart/Interatividade")
+
+#setwd("C:\\Users\\sgomes\\Documents\\INSPER\\Data_Science\\Materias\\3o Trim\\Integradora\\Integradora_Git\\instacart\\Interatividade")
+
+library(tidyverse)
+library(tidymodels)
+library(inspectdf)
+library(skimr)
+library(treemap)
+library(d3treeR)
+library(ggiraphExtra)
+library(ggthemes)
+library(janitor)
+library(lubridate)
+library(grid)
+library(shiny)
+library(factoextra)
+library(DT)
+
+theme_set(theme_minimal())
+theme_update(text = element_text(family = "Brandon Text"),
+             plot.title = element_text(face = "bold"))
+
+source('instacart_palette.R')
+
+options(pillar.sigfig = 1)
+
+```
+
+
+```{r global}
+
+ # arquivos <- list.files(path = '../data', 
+ #                        pattern = "*.csv",
+ #                        full.names = TRUE) %>% sort()
+ # 
+ # base_aisles <- read_csv(arquivos[1])
+ # 
+ # base_dept <- read_csv(arquivos[2])
+ # 
+ # base_ord_prior <- read_csv(arquivos[3])
+ # 
+ # base_ord_train <- read_csv(arquivos[4])
+ # 
+ # base_orders <- read_csv(arquivos[5])
+ # 
+ # base_products <- read_csv(arquivos[6])
+ 
+# Functions ----------------------------------
+
+x4 <- function(x) x^4
+
+x_4 <- function(x) sqrt(sqrt(x))
+
+x2 <- function(x) x^2
+
+x_2 <- function(x) sqrt(x)
+
+
+
+# Wrangling ----------------------------------
+
+## Heatmaps -----------
+
+
+prod_ord_cart2 <- read_csv("prod_ord_cart2_.csv")
+
+prod_ord_cart_rec2 <- read_csv("prod_ord_cart_rec2_.csv")
+
+prod_ord_cart2_list <- read_csv("prod_ord_cart2_list_.csv")
+
+prod_ord_cart_rec2_list <- read_csv("prod_ord_cart_rec2_list_.csv")
+
+# base_k_user <- read.csv("data\\base_k_user.csv")
+# base_k_user <- base_k_user[2:ncol(base_k_user)]
+# 
+# dados_clusters <- read.csv("data\\base_graf_exp.csv")
+# dados_clusters <- dados_clusters[2:ncol(dados_clusters)]
+
+n_prod <- c(10:100)
+# 
+# ## Clusters ------------
+
+# source("clusters_new.R")
+
+n_k <- reactiveValues(data = 7)
+
+
+```
+
+
+
+Heatmaps
+=====================================  
+
+
+Parâmetros {.sidebar data-width=200}
+-----------------------------------------------------------------------
+
+### Parâmetros
+
+```{r Inputs}
+
+
+
+selectInput("funcao","Transformação da escala", choices = c("Linear", "Quadrado", "Raiz Quadrada", 
+                                                  "Quarta Potência", "Raiz Quarta"),
+                                            selected = "Quadrado")
+
+sliderInput("slider_n_prod", "Número de produtos", 
+                                         min(n_prod),
+                                         max(n_prod), 
+                                         value = 50,
+                                         step = 15)
+
+
+# ?sliderInput
+```
+
+
+Row 
+-----------------------------------------------------------------------
+
+### Churn
+
+```{r Graph_Heat}
+
+renderPlot({
+        prod_ord_cart2_list2 <- prod_ord_cart2_list[1:input$slider_n_prod,1]
+        prod_100_n_rec <- prod_ord_cart2 %>% right_join(prod_ord_cart2_list2)
+
+        # "1", "x^2", "sqrt2", "x^4", "sqrt4"
+        vline_size <- 5
+        label_size <- min(7 + (2 * 100/input$slider_n_prod),12)
+        n_prod1 <- 3.32
+        texto1 <- "Média Produtos/Ordem = 3,32"
+        formato <- list(
+                theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)),
+                labs(title = "Produtos x Cart Order para clientes Churn",
+                     fill = "%", x = "Produto", y = "Ordem no carrinho"),
+                theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)),
+                geom_hline(yintercept = n_prod1, color = "orange"),
+                scale_y_continuous(limits = c(0,30), expand = c(0,0)),
+                geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ),
+                          size = vline_size, color = 'orange', hjust = 0, vjust = 0, fontface = "bold")
+        )
+        if (input$funcao == "Linear"){
+            prod_100_n_rec %>%
+                ggplot() +
+                geom_tile(aes(product_name,
+                              add_to_cart_order,
+                              fill = perc*100)) + 
+                scale_fill_gradient2(low = "white",
+                                     high = "darkgreen",
+                                     limits = c(0,40)) + 
+                formato
+        } else {
+            if (input$funcao == "Quadrado"){
+                prod_100_n_rec %>% 
+                    ggplot() +
+                    geom_tile(aes(product_name,
+                                  add_to_cart_order,
+                                  fill = perc*100)) + 
+                    scale_fill_gradient2(low = "white",
+                                         high = "darkgreen",
+                                         limits = c(0,40),
+                                         trans = scales::trans_new(name = "quad",
+                                                                   transform = x2, 
+                                                                   inverse = x_2)) + 
+                    formato
+            } else {
+                if (input$funcao == "Raiz Quadrada"){
+                    prod_100_n_rec %>% ggplot() +
+                    geom_tile(aes(product_name,
+                                  add_to_cart_order,
+                                  fill = perc*100)) +
+                        scale_fill_gradient2(low = "white",
+                                             high = "darkgreen",
+                                             limits = c(0,40),
+                                             trans = scales::trans_new(name = "quad",
+                                                                       transform = x_2, 
+                                                                       inverse = x2))+
+                          formato
+                } else {
+                    if (input$funcao == "Quarta Potência"){
+                        prod_100_n_rec %>% ggplot() +
+                        geom_tile(aes(product_name,
+                                      add_to_cart_order,
+                                      fill = perc*100)) + 
+                            scale_fill_gradient2(low = "white",
+                                                 high = "darkgreen",
+                                                 limits = c(0,40),
+                                                 trans = scales::trans_new(name = "quad",
+                                                                           transform = x4, 
+                                                                           inverse = x_4))+
+                            formato
+                    } else {
+                        if (input$funcao == "Raiz Quarta"){
+                            prod_100_n_rec %>% ggplot() +
+                              geom_tile(aes(product_name,
+                                            add_to_cart_order,
+                                            fill = perc*100)) +
+                                scale_fill_gradient2(low = "white",
+                                                     high = "darkgreen",
+                                                     limits = c(0,40),
+                                                     trans = scales::trans_new(name = "quad",
+                                                                               transform = x_4, 
+                                                                               inverse = x4))+
+                                  formato
+                        }
+                    }
+                }
+            }
+        }
+
+
+    })
+
+```
+
+Row 
+-----------------------------------------------------------------------
+
+### Clientes Recorrentes
+
+```{r Graph_Heat2}
+
+renderPlot({
+        prod_ord_cart_rec2_list <- prod_ord_cart_rec2_list[1:input$slider_n_prod,1]
+        prod_100_rec <- prod_ord_cart_rec2 %>% right_join(prod_ord_cart_rec2_list)
+        vline_size <- 5
+        n_prod2 <- 7.13
+        label_size <- min(7 + (2 * 100/input$slider_n_prod),12)
+        texto2 <- "Média Produtos/Ordem = 7,13"
+        formato2 <- list(
+                theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)),
+                labs(title = "Produtos x Ordem no carrinho para clientes Recorrentes",
+                     fill = "%", x = "Produto", y = "Ordem no carrinho"),
+                theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)),
+                geom_hline(yintercept = n_prod2, color = "orange"),
+                scale_y_continuous(limits = c(0,30),expand = c(0,0)),
+                geom_text(aes(x = 5, y = n_prod2+0.1, label = texto2 ),
+                          size = vline_size, color = 'orange', hjust = 0, vjust = 0, fontface = "bold")
+        )
+        if (input$funcao == "Linear"){
+            prod_100_rec %>% ggplot() +
+                    geom_tile(aes(product_name,
+                                  add_to_cart_order,
+                                  fill = perc*100)) +
+                scale_fill_gradient2(low = "white",
+                                     high = "darkgreen",
+                                     limits = c(0,40)) + 
+                formato2
+        } else {
+            if (input$funcao == "Quadrado"){
+                prod_100_rec %>% ggplot() +
+                    geom_tile(aes(product_name,
+                                  add_to_cart_order,
+                                  fill = perc*100)) +
+                    geom_tile(aes(reorder(product_name,
+                                          desc(recorrencias),
+                                          FUN = mean),
+                                  add_to_cart_order,
+                                  fill = perc*100)) +
+                    scale_fill_gradient2(low = "white",
+                                         high = "darkgreen",
+                                         limits = c(0,40),
+                                         trans = scales::trans_new(name = "quad", 
+                                                                   transform = x2,
+                                                                   inverse = x_2))+
+                    formato2
+            } else {
+                if (input$funcao == "Raiz Quadrada"){
+                    prod_100_rec %>% ggplot() +
+                    geom_tile(aes(product_name,
+                                  add_to_cart_order,
+                                  fill = perc*100)) +
+                        scale_fill_gradient2(low = "white",
+                                             high = "darkgreen",
+                                             limits = c(0,40),
+                                             trans = scales::trans_new(name = "quad",
+                                                                       transform = x_2, 
+                                                                       inverse = x2)) + 
+                        formato2
+                } else {
+                    if (input$funcao == "Quarta Potência"){
+                        prod_100_rec %>% ggplot() +
+                        geom_tile(aes(product_name,
+                                      add_to_cart_order,
+                                      fill = perc*100)) +
+                            scale_fill_gradient2(low = "white",
+                                                 high = "darkgreen",
+                                                 limits = c(0,40),
+                                                 trans = scales::trans_new(name = "quad",
+                                                                           transform = x4, 
+                                                                           inverse = x_4)) +
+                            formato2
+                    } else {
+                        if (input$funcao == "Raiz Quarta"){
+                            prod_100_rec %>% ggplot() +
+                            geom_tile(aes(product_name,
+                                          add_to_cart_order,
+                                          fill = perc*100)) +
+                                scale_fill_gradient2(low = "white",
+                                                     high = "darkgreen",
+                                                     limits = c(0,40),
+                                                     trans = scales::trans_new(name = "quad",
+                                                                               transform = x_4, 
+                                                                               inverse = x4)) +
+                                formato2
+                        }
+                    }
+                }
+            }
+        }
+
+
+    })
+
+
+```
+
+
+<!-- Clusters -->
+<!-- =====================================   -->
+
+<!-- Parâmetros {.sidebar data-width=200} -->
+<!-- ----------------------------------------------------------------------- -->
+
+<!-- ### Parâmetros -->
+
+<!-- ```{r Cluster_Slider} -->
+
+<!-- sliderInput("k", "Número de Clusters", -->
+<!--                         min = 1, -->
+<!--                         max = 10, -->
+<!--                         value = 7) -->
+
+<!-- actionButton("submit", text = "Atualizar",icon("refresh")) -->
+
+
+<!-- ``` -->
+
+
+<!-- Row {data-heigth=80 .no-padding} -->
+<!-- ----------------------------------------------------------------------- -->
+
+<!-- ```{r} -->
+
+<!-- clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = 7) -->
+
+<!-- base_graf_exp <- base_k_user %>% -->
+<!--   bind_cols(cluster = clust_kmean$cluster) -->
+
+<!-- base_graf_exp %>% write.csv("..\\data\\base_graf_exp.csv") -->
+
+<!-- ``` -->
+
+
+<!-- ### Clusters - Duplo clique no cluster para ver detalhes -->
+
+<!-- ```{r Cluster_Spider, set.seed(321)} -->
+
+<!-- plotOutput("spider", dblclick = dblclickOpts( -->
+<!--                id = "plot_dblclick" -->
+<!--            )) -->
+
+<!-- observeEvent(input$submit,{n_k$data <- input$k}) -->
+
+<!-- clust <- function (base,x) base[,c(2:ncol(base))] %>% scale(center = F) %>% hkmeans(k = x) -->
+
+<!-- clust_kmean <- reactive({clust(base_k_user,n_k$data)}) -->
+
+
+<!-- output$spider <- renderPlot({ -->
+<!--         # clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = n_k$data) -->
+<!--         # -->
+
+<!--         # Calculando os perfis dos clusters -->
+
+<!--         dados_clusters <- clust_kmean()$centers -->
+
+<!--         dados_clusters <- tibble(cluster = rownames(dados_clusters)) %>% bind_cols(as_tibble(dados_clusters)) -->
+
+<!--         c <- "orange" -->
+<!--         nc <- "green" -->
+
+<!--         spider <- dados_clusters %>% ggRadar(aes(x = c(n_compras, -->
+<!--                                                        t_mean, -->
+<!--                                                        mean_prod_cart, -->
+<!--                                                        mean_peso_cart, -->
+<!--                                                        mean_rec_fat), -->
+<!--                                                  facet = cluster), -->
+<!--                                              interactive = F, -->
+<!--                                              size = 1.5, -->
+<!--                                              legend.position = "none") +  -->
+<!--                                               scale_colour_manual(values=c(nc,nc,nc,nc,c,nc,nc))+ -->
+<!--                                               scale_fill_manual(values=c(nc,nc,nc,nc,c,nc,nc)) -->
+<!--         spider -->
+<!--     }) -->
+
+
+<!-- ``` -->
+
+
+<!-- ### Dados dos Clusters -->
+
+<!-- ```{r Cluster_Text2, warning=FALSE, error=FALSE} -->
+
+<!-- renderDT({ -->
+<!--   # clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = n_k$data) -->
+
+<!--         if (is.null(input$plot_dblclick$panelvar1)){ -->
+<!--             base_graf_exp <- base_k_user %>% -->
+<!--                               bind_cols(cluster = clust_kmean()$cluster) -->
+
+<!--             print(base_graf_exp %>%  -->
+<!--                     select(-user_id) %>%  -->
+<!--                     group_by(cluster) %>%  -->
+<!--                     summarise(n_compras = mean(n_compras) %>% round(2), -->
+<!--                               t_mean = mean(t_mean) %>% round(2), -->
+<!--                               mean_prod_cart = mean(mean_prod_cart) %>% round(2), -->
+<!--                               mean_peso_cart = mean(mean_peso_cart) %>% round(2), -->
+<!--                               mean_rec_fat = mean(mean_rec_fat) %>% round(2)) %>%  -->
+<!--                     data.frame()); -->
+<!--         } else { -->
+<!--             base_graf_exp <- base_k_user %>% -->
+<!--                               bind_cols(cluster = clust_kmean()$cluster) -->
+
+<!--             print(base_graf_exp %>%  -->
+<!--                     select(-user_id) %>%  -->
+<!--                     group_by(cluster) %>%  -->
+<!--                     summarise(n_compras = mean(n_compras) %>% round(2), -->
+<!--                               t_mean = mean(t_mean) %>% round(2), -->
+<!--                               mean_prod_cart = mean(mean_prod_cart) %>% round(2), -->
+<!--                               mean_peso_cart = mean(mean_peso_cart) %>% round(2), -->
+<!--                               mean_rec_fat = mean(mean_rec_fat) %>% round(2)) %>% -->
+<!--                     filter(cluster == input$plot_dblclick$panelvar1) %>%  -->
+<!--                     data.frame()); -->
+<!--         } -->
+
+<!-- },class = 'cell-border stripe') -->
+
+<!-- ``` -->
+
+<!-- Row {data-height=400 .no-padding} -->
+<!-- ----------------------------------------------------------------------- -->
+
+<!-- ### Produtos -->
+
+<!-- ```{r Cluster_TreeMap, warning=FALSE, error=FALSE} -->
+
+<!-- renderD3tree3({ -->
+<!--   if (is.null(input$plot_dblclick$panelvar1)){ -->
+<!--               base_graf2 <- base_k_user %>% -->
+<!--                               bind_cols(cluster = clust_kmean()$cluster) -->
+
+<!--           cores <- unname(instacart_colors) -->
+<!--           base_ord_geral_all %>% -->
+<!--               right_join(base_graf2 %>% select(user_id)) %>% -->
+<!--               group_by(aisle, product_name) %>% -->
+<!--               summarise(contagem = n()) %>% -->
+<!--               arrange(desc(contagem)) %>% -->
+<!--               data.frame() %>% -->
+<!--               slice_head(n = 50) %>% -->
+<!--               treemap(base_ord_geral_all, -->
+<!--                       index=c("aisle","product_name"), -->
+<!--                       vSize="contagem", -->
+<!--                       type="index", -->
+<!--                       # palette = "Set2", -->
+<!--                       palette = cores[1:length(cores)], -->
+<!--                       bg.labels=c("white"), -->
+<!--                       align.labels=list( -->
+<!--                           c("center", "center"), -->
+<!--                           c("right", "bottom") -->
+<!--                       ) -->
+<!--               ) %>% d3tree2(rootname = "Principais Produtos") -->
+<!--   } else { -->
+<!--           base_graf2 <- base_k_user %>% -->
+<!--                               bind_cols(cluster = clust_kmean()$cluster) %>% -->
+<!--                               filter(cluster == as.numeric(input$plot_dblclick$panelvar1)) -->
+
+<!--           cores <- unname(instacart_colors) -->
+<!--           base_ord_geral_all %>% -->
+<!--               right_join(base_graf2 %>% select(user_id)) %>% -->
+<!--               group_by(aisle, product_name) %>% -->
+<!--               summarise(contagem = n()) %>% -->
+<!--               arrange(desc(contagem)) %>% -->
+<!--               data.frame() %>% -->
+<!--               slice_head(n = 50) %>% -->
+<!--               treemap(base_ord_geral_all, -->
+<!--                       index=c("aisle","product_name"), -->
+<!--                       vSize="contagem", -->
+<!--                       type="index", -->
+<!--                       # palette = "Set2", -->
+<!--                       palette = cores[1:length(cores)], -->
+<!--                       bg.labels=c("white"), -->
+<!--                       align.labels=list( -->
+<!--                           c("center", "center"), -->
+<!--                           c("right", "bottom") -->
+<!--                       ) -->
+<!--               ) %>% d3tree2(rootname = "Principais Produtos") -->
+<!--   } -->
+
+
+<!--     }) -->
+
+<!-- ``` -->
+
+
+
