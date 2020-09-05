@@ -36,7 +36,7 @@ instacart_palettes <- list(
   
   `contrast`  = ic_cols("orange","light-blue","dark-green"),
   
-  `clusters` = ic_cols("orange","green", "gray", "gray-dark", "dark-green")
+  `clusters` = ic_cols("orange","green", "gray")
 )
 
 instacart_pal <- function(palette = "main", reverse = FALSE, ...) {

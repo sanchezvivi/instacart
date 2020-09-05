@@ -38,11 +38,12 @@ library(lubridate)
 library(grid)
 library(RcppRoll)
 library(extrafont)
+library(treemapify)
 
 font_import()
 
 theme_set(theme_minimal())
-theme_update(text = element_text(family = "Brandon Text"),
+theme_update(text = element_text(family = "Brandon Text", size = 18),
              plot.title = element_text(face = "bold"))
 
 source('instacart_palette.R')
@@ -71,25 +72,42 @@ products_raw <- read_csv(arquivos[6])
 
 clusters_raw <- read_csv('output/cl4.csv')
 
+clusters2_raw <- read_csv('output/base_graf_exp.csv')
+
+
+
+#128 a 148
+
 ```
 
 
 ```{r}
 
 clusters <- clusters_raw %>% 
-  rename('user_id' = name) %>% 
-  select(user_id, cluster) %>% 
-  mutate(cluster_name = case_when(cluster == 3 ~ 'Rafaela',
-                           cluster == 4 ~ 'Recorrente',
-                           is.na(cluster) ~ 'Indefinido',
-                           FALSE ~ 'Outro'),
-         cluster_name = factor(cluster_name, 
-                                   levels = c('Rafaela', 'Recorrente' , 'Churn', 'Indefinido'), 
-                                   ordered = TRUE))
+  rename('user_id' = name,
+         'cluster_ts' = cluster) %>% 
+  select(user_id, cluster_ts) %>% 
+  mutate(cluster_name = case_when(cluster_ts == 3 ~ 'Rafaela',
+                           cluster_ts == 4 ~ 'Recorrente',
+                           is.na(cluster_ts) ~ 'Outro',
+                           cluster_ts <=2  ~ 'Outro'))
+         #cluster_name = factor(cluster_name, 
+         #                          levels = c('Rafaela', 'Recorrente' , 'Outro'), 
+         #                          ordered = TRUE))
+
+clusters2 <- clusters2_raw %>% 
+  select(-X1) %>% 
+  rename('cluster2' = cluster) %>% 
+  #select(user_id, cluster) %>% 
+  mutate(cluster2_name = case_when(cluster2 == 5 ~ 'Rafaela',
+                           cluster2 == 7 ~ 'Recorrente',
+                           is.na(cluster2) ~ 'Outro',
+                           (cluster2 == 6 | cluster2 < 5) ~ 'Outro'))
+         #cluster2_name = factor(cluster2_name, 
+                                  # levels = c('Rafaela', 'Recorrente' , 'Outro'), 
+                                  # ordered = TRUE))
 
 
-
-skim(clusters)
 ```
 
 
@@ -112,17 +130,148 @@ orders_prior <- op_prior_raw %>%
   left_join(clusters, by = 'user_id') #%>% replace_na(days_since_prior, 0)
 
 
-orders_train <- op_train_raw %>% 
-  left_join(products_raw, by = 'product_id') %>% 
-  left_join(departments_raw, by = 'department_id') %>% 
-  left_join(orders_raw, by = 'order_id') %>% 
-  left_join(clusters, by = 'user_id') #%>% replace_na(days_since_prior, 0)
+orders_clusters <- orders_prior %>% 
+   left_join(clusters2, by = 'user_id')
 
-orders_train %>% 
-  inspect_na()
+#orders_clusters %>% 
+#  inspect_na()
+
+
+orders_clusters_gg <- orders_clusters %>% 
+  select(user_id, cluster_name, cluster2_name, t_mean, days_since_prior_order, order_number, 
+         order_dow, order_hour_of_day) %>% 
+  mutate(cluster = case_when(cluster_name == 'Rafaela'~'Recorrente',
+                             cluster2_name == 'Rafaela' ~ 'Recorrente',
+                             cluster_name == 'Recorrente' ~ 'Rafaela',
+                             cluster2_name == 'Recorrente' ~ 'Rafaela'),
+         cluster = if_else(is.na(cluster), 'Outro', cluster),
+         cluster = factor(cluster, levels = c('Outro', 'Recorrente' , 'Rafaela'), 
+                                   ordered = TRUE))
+  
+
+#orders_clusters_gg %>% 
+#  group_by(cluster) %>% 
+#  count()
+  
+
+#orders_train <- op_train_raw %>% 
+#  left_join(products_raw, by = 'product_id') %>% 
+#  left_join(departments_raw, by = 'department_id') %>% 
+#  left_join(orders_raw, by = 'order_id') %>% 
+#  left_join(clusters, by = 'user_id') #%>% replace_na(days_since_prior, 0)
+
 
 
 ```
+
+```{r}
+
+orders_treemap <- orders_clusters %>% 
+  select(user_id, cluster_name, cluster2_name, aisle_id, department, product_name) %>% 
+  left_join(aisles_raw, by = 'aisle_id') 
+
+tmp <- orders_treemap %>% 
+  #left_join(select(orders_clusters_gg, user_id, cluster), by = 'user_id')
+mutate(cluster = case_when(cluster_name == 'Rafaela'~'Recorrente',
+                           cluster2_name == 'Rafaela' ~ 'Recorrente',
+                           cluster_name == 'Recorrente' ~ 'Rafaela',
+                           cluster2_name == 'Recorrente' ~ 'Rafaela'),
+       cluster = if_else(is.na(cluster), 'Outro', cluster),
+       cluster = factor(cluster, levels = c('Outro', 'Recorrente' , 'Rafaela'), 
+                                 ordered = TRUE))
+
+```
+
+
+```{r}
+
+p <- base_ord_geral_all %>%
+          right_join(base_graf2 %>% select(user_id)) %>%
+          group_by(aisle, product_name) %>%
+          summarise(contagem = n()) %>%
+          arrange(desc(contagem)) %>%
+          data.frame() %>%
+          slice_head(n = 50) %>% 
+          treemap(base_ord_geral_all,
+                     index=c("aisle","product_name"),
+                     vSize="contagem",
+                     type="index",
+                     palette = "Set2",
+                     bg.labels=c("white"),
+                     align.labels=list(
+                       c("center", "center"), 
+                       c("right", "bottom")
+                     )
+        )
+
+```
+
+
+
+```{r}
+
+
+glimpse(orders_treemap)
+
+tmp %>% 
+  group_by(aisle, product_name) %>% 
+  summarise(contagem = n()) %>%
+  arrange(desc(contagem)) %>%
+  ggplot(aes(area = contagem, fill = aisle, subgroup = aisle, label = product_name)) +
+  geom_treemap(show.legend = F)+
+  geom_treemap_subgroup_text(place = "left", grow = T, alpha = 0.3, colour =
+                             "black", fontface = "italic", min.size = 0) +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  scale_fill_instacart(palette = 'mixed') +
+  #labs(title = 'Produtos') +
+  #theme_economist() +
+  theme(axis.line = element_blank())
+
+```
+
+
+```{r}
+
+tmp %>% 
+  filter(cluster == 'Rafaela') %>% 
+  group_by(aisle, product_name) %>% 
+  summarise(contagem = n()) %>%
+  arrange(desc(contagem)) %>%
+  ggplot(aes(area = contagem, fill = aisle, subgroup = aisle, label = product_name)) +
+  geom_treemap(show.legend = F) +
+  geom_treemap_subgroup_text(place = "left", grow = T, alpha = 0.3, colour =
+                             "black", fontface = "italic", min.size = 0) +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  scale_fill_tableau("Tableau 20") +
+  #scale_fill_instacart() +
+  labs(title = 'Produtos') +
+  #theme_economist() +
+  theme(axis.line = element_blank())
+
+```
+
+
+```{r}
+
+
+orders_treemap %>% 
+  filter(cluster == 'Recorrente') %>% 
+  group_by(aisle_id, department, product_name) %>% 
+  summarise(contagem = n()) %>%
+  arrange(desc(contagem)) %>%
+  ggplot(aes(area = contagem, fill = aisle_id, subgroup = department, label = product_name)) +
+  geom_treemap()+
+  geom_treemap_subgroup_text(place = "left", grow = T, alpha = 0.3, colour =
+                             "black", fontface = "italic", min.size = 0) +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  scale_fill_instacart(discrete = F) +
+  labs(title = 'Produtos') +
+  #theme_economist() +
+  theme(legend.position="right", axis.line = element_blank())
+
+
+```
+
 
 
 #### Filtro cliente
@@ -169,7 +318,7 @@ return(cart)
 
 ```
 
-#### Gráficos ---------
+## Gráficos ---------
 
 ```{r}
 
@@ -187,18 +336,55 @@ orders <- orders_prior %>%
     summarise(days_since_last = mean(days_since_prior_order, na.rm = T)) %>% 
     arrange(desc(order_number))
     
-orders_prior %>% 
-  #mutate(if_else(is.na(cluster_name), 'Indefinido', cluster_name)) %>% 
-  group_by(cluster_name, order_number) %>% 
+orders_clusters_gg %>% 
+  group_by(cluster, order_number) %>% 
   #filter(user_id == 202279) %>%
   summarise(days_since_last = mean(days_since_prior_order, na.rm = T)) %>% 
-  ggplot(aes(x = order_number, y = days_since_last, color = cluster_name))+ 
-  geom_line() +
-  geom_hline(aes(yintercept = 10), linetype = 'dashed', show.legend = F) +
-  scale_color_instacart(palette = 'clusters') +
+  ggplot(aes(x = order_number, y = days_since_last, color = cluster))+ 
+  geom_line(size = 1) +
+  #geom_hline(aes(yintercept = 10), linetype = 'dashed', show.legend = F) +
+  scale_color_instacart(palette = 'clusters', reverse = T) +
   labs(x = 'Ordem do pedido', y = 'Dias desde a última compra', 
-       color = 'Cluster')
-  
+       color = 'Cluster') +
+  theme(legend.position="bottom")
+
+
+
+glimpse(orders_clusters_gg)
+
+orders_clusters_gg %>% 
+  mutate(dia = case_when(order_dow == 0 ~ 'Domingo',
+                         order_dow == 1 ~ 'Segunda',
+                         order_dow == 2 ~ 'Terça',
+                         order_dow == 3 ~ 'Quarta',
+                         order_dow == 4 ~ 'Quinta',
+                         order_dow == 5 ~ 'Sexta',
+                         order_dow == 6 ~ 'Sábado')) %>% 
+  group_by(cluster, dia, order_dow) %>%
+  filter(cluster == 'Rafaela') %>% 
+  #filter(user_id == 202279) %>%
+  summarise(orders_n = n()) %>% 
+  ggplot(aes(x = reorder(dia, order_dow), y = orders_n/sum(orders_n)))+ 
+  geom_col(position = 'dodge', show.legend = F, fill  = instacart_colors['orange']) +
+  #geom_hline(aes(yintercept = 10), linetype = 'dashed', show.legend = F) +
+  scale_fill_instacart(palette = 'clusters', reverse = F) +
+  labs(y = 'Percentual de Pedidos', x = 'Dia da semana', 
+       color = 'Cluster') +
+  theme(legend.position="bottom") +
+  scale_y_continuous(labels = scales::percent_format())
+
+
+orders_clusters_gg %>% 
+  group_by(cluster, order_dow, order_hour_of_day) %>%
+  filter(cluster == 'Rafaela') %>% 
+  summarise(orders_n = n()) %>% 
+  ggplot(aes(x = order_hour_of_day, y = order_dow, size  = (orders_n/sum(orders_n))))+ 
+  geom_density(show.legend = F, color  = instacart_colors['orange']) +
+  #geom_hline(aes(yintercept = 10), linetype = 'dashed', show.legend = F) +
+  scale_fill_instacart(palette = 'clusters', reverse = F) +
+  labs(y = 'Percentual de Pedidos', x = 'Horário da compra', 
+       color = 'Cluster') +
+  theme(legend.position="bottom")
 
 
 ```
