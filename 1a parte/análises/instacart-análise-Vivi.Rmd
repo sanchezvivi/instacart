@@ -79,10 +79,10 @@ clusters_raw <- read_csv('output/cl4.csv')
 clusters <- clusters_raw %>% 
   rename('user_id' = name) %>% 
   select(user_id, cluster) %>% 
-  mutate(cluster_name = case_when(cluster == 4 ~ 'Rafaela',
-                           cluster <= 2 ~ 'Recorrente',
-                           cluster == 3 ~ 'Churn',
-                           is.na(cluster) ~ 'Indefinido'),
+  mutate(cluster_name = case_when(cluster == 3 ~ 'Rafaela',
+                           cluster == 4 ~ 'Recorrente',
+                           is.na(cluster) ~ 'Indefinido',
+                           FALSE ~ 'Outro'),
          cluster_name = factor(cluster_name, 
                                    levels = c('Rafaela', 'Recorrente' , 'Churn', 'Indefinido'), 
                                    ordered = TRUE))
@@ -92,6 +92,12 @@ clusters <- clusters_raw %>%
 skim(clusters)
 ```
 
+
+principal da apresentação
+- persona
+- pesquisa
+- análise
+- protótipo
 
 ### Gráficos Bot --------------------
 
