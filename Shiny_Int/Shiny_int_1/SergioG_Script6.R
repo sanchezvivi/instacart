@@ -5,8 +5,8 @@
 #              'inspectdf', 'skimr', 'naniar', 'visdat', 'tidymodels', 
 #              'klaR', 'corrplot', 'NetCluster', 'factoextra', 'maptree', 'treemap', 'DT','patchwork')
 # library(ggiraph)
-# library(tidymodels)
-# library(tidyverse)
+library(tidymodels)
+library(tidyverse)
 # library(cluster)
 
 biblios <- c('stringr', 'inspectdf', 'dplyr', 'skimr', 
@@ -124,6 +124,30 @@ x_2<- function(x) sqrt(x)
 #   arrange(user_id,desc(order_number))
 
 # base_ord_geral_all %>% write.csv("data\\base_ord_geral_all.csv")
+
+getwd()
+
+prod_ord_cart2 <- read_csv("data\\prod_ord_cart2.csv")
+
+prod_ord_cart_rec2 <- read_csv("data\\prod_ord_cart_rec2.csv")
+
+prod_ord_cart2_list <- read_csv("data\\prod_ord_cart2_list.csv")
+
+prod_ord_cart_rec2_list <- read_csv("data\\prod_ord_cart_rec2_list.csv")
+
+prod_ord_cart_rec2_list <- prod_ord_cart_rec2_list[1:100,1]
+prod_100_rec <- prod_ord_cart_rec2 %>% right_join(prod_ord_cart_rec2_list)
+
+
+prod_ord_cart2_list2 <- prod_ord_cart2_list[1:100,1]
+prod_100_n_rec <- prod_ord_cart2 %>% right_join(prod_ord_cart2_list2)
+
+
+prod_100_rec %>% write.csv("data\\prod_ord_cart_rec2_.csv")
+
+prod_100_n_rec %>% write.csv("data\\prod_ord_cart2_.csv")
+
+
 
 base_ord_geral_all <- read.csv("data\\base_ord_geral_all.csv")
 base_ord_geral_all <- base_ord_geral_all[2:ncol(base_ord_geral_all)]
@@ -274,7 +298,11 @@ dados_clusters <- dados_clusters[2:ncol(dados_clusters)]
                            interactive = F,
                            size = 1.5,
                            legend.position = "right"
-                           ) + 
+                           ) + +
+    scale_colour_manual(values=c(nc, nc,
+                                 nc,nc,c,nc,nc))+
+    scale_fill_manual(values=c(nc, nc,
+                               nc,nc,c,nc,nc))
                             
     )
 

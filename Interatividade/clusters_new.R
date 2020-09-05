@@ -156,10 +156,10 @@ x_2<- function(x) sqrt(x)
 # Verificando um consumidor como exemplo
 # base_ord_geral_all %>% left_join(prod_fator %>% select(product_name, fator)) %>% filter(user_id == 4) %>% view()
 
-base_ord_geral_all <- read.csv("..\\data\\base_ord_geral_all.csv")
+base_ord_geral_all <- read.csv("base_ord_geral_all.csv")
 base_ord_geral_all <- base_ord_geral_all[2:ncol(base_ord_geral_all)]
 
-base_k_user <- read.csv("..\\data\\base_k_user.csv")
+base_k_user <- read.csv("base_k_user.csv")
 base_k_user <- base_k_user[2:ncol(base_k_user)]
 
 # # rodando K-means

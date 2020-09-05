@@ -13,9 +13,9 @@ output:
 ```{r setup, include=FALSE}
 
 
-wd <- getwd()
-
-setwd("/Users/vivi/Documents/Data Science/Insper/3 Integradora/instacart/Interatividade")
+# wd <- getwd()
+# 
+# setwd("/Users/vivi/Documents/Data Science/Insper/3 Integradora/instacart/Interatividade")
 
 #setwd("C:\\Users\\sgomes\\Documents\\INSPER\\Data_Science\\Materias\\3o Trim\\Integradora\\Integradora_Git\\instacart\\Interatividade")
 
@@ -38,7 +38,7 @@ theme_set(theme_minimal())
 theme_update(text = element_text(family = "Brandon Text"),
              plot.title = element_text(face = "bold"))
 
-source('../instacart_palette.R')
+source('instacart_palette.R')
 
 options(pillar.sigfig = 1)
 
@@ -47,21 +47,21 @@ options(pillar.sigfig = 1)
 
 ```{r global}
 
- arquivos <- list.files(path = '../data', 
-                        pattern = "*.csv",
-                        full.names = TRUE) %>% sort()
- 
- base_aisles <- read_csv(arquivos[1])
- 
- base_dept <- read_csv(arquivos[2])
- 
- base_ord_prior <- read_csv(arquivos[3])
- 
- base_ord_train <- read_csv(arquivos[4])
- 
- base_orders <- read_csv(arquivos[5])
- 
- base_products <- read_csv(arquivos[6])
+ # arquivos <- list.files(path = '../data', 
+ #                        pattern = "*.csv",
+ #                        full.names = TRUE) %>% sort()
+ # 
+ # base_aisles <- read_csv(arquivos[1])
+ # 
+ # base_dept <- read_csv(arquivos[2])
+ # 
+ # base_ord_prior <- read_csv(arquivos[3])
+ # 
+ # base_ord_train <- read_csv(arquivos[4])
+ # 
+ # base_orders <- read_csv(arquivos[5])
+ # 
+ # base_products <- read_csv(arquivos[6])
  
 # Functions ----------------------------------
 
@@ -79,43 +79,20 @@ x_2 <- function(x) sqrt(x)
 
 ## Heatmaps -----------
 
-<<<<<<< Updated upstream
- prod_ord_cart2 <- read_csv("../output/prod_ord_cart2.csv")
- 
- prod_ord_cart_rec2 <- read_csv("../output/prod_ord_cart_rec2.csv")
- 
- prod_ord_cart2_list <- read_csv( "../output/prod_ord_cart2_list.csv")
- 
- prod_ord_cart_rec2_list <- read_csv("../output/prod_ord_cart_rec2_list.csv")
 
-#prod_ord_cart2 <- read_csv("../data/prod_ord_cart2.csv")
-#
-#prod_ord_cart_rec2 <- read_csv("../data/prod_ord_cart_rec2.csv")
-#
-#prod_ord_cart2_list <- read_csv( "../data/prod_ord_cart2_list.csv")
-#
-#prod_ord_cart_rec2_list <- read_csv("../data/prod_ord_cart_rec2_list.csv")
-=======
-# prod_ord_cart2 <- read_csv("../output/prod_ord_cart2.csv")
+prod_ord_cart2 <- read_csv("prod_ord_cart2.csv")
+
+prod_ord_cart_rec2 <- read_csv("prod_ord_cart_rec2.csv")
+
+prod_ord_cart2_list <- read_csv("prod_ord_cart2_list.csv")
+
+prod_ord_cart_rec2_list <- read_csv("prod_ord_cart_rec2_list.csv")
+
+# base_k_user <- read.csv("data\\base_k_user.csv")
+# base_k_user <- base_k_user[2:ncol(base_k_user)]
 # 
-# prod_ord_cart_rec2 <- read_csv("../output/prod_ord_cart_rec2.csv")
-# 
-# prod_ord_cart2_list <- read_csv( "../output/prod_ord_cart2_list.csv")
-# 
-# prod_ord_cart_rec2_list <- read_csv("../output/prod_ord_cart_rec2_list.csv")
-
-
-
-
-prod_ord_cart2 <- read_csv("../data/prod_ord_cart2.csv")
-
-prod_ord_cart_rec2 <- read_csv("../data/prod_ord_cart_rec2.csv")
-
-prod_ord_cart2_list <- read_csv( "../data/prod_ord_cart2_list.csv")
-
-prod_ord_cart_rec2_list <- read_csv("../data/prod_ord_cart_rec2_list.csv")
->>>>>>> Stashed changes
-
+# dados_clusters <- read.csv("data\\base_graf_exp.csv")
+# dados_clusters <- dados_clusters[2:ncol(dados_clusters)]
 
 n_prod <- c(10:100)
 # 
@@ -541,7 +518,6 @@ renderD3tree3({
                       )
               ) %>% d3tree2(rootname = "Principais Produtos")
   }
-
 
 
     })
