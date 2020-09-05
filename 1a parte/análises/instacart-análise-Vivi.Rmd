@@ -349,6 +349,32 @@ orders_clusters_gg %>%
   theme(legend.position="bottom")
 
 
+orders_clusters_gg %>% 
+  group_by(cluster, order_number) %>% 
+  #filter(user_id == 202279) %>%
+  summarise(days_since_last = mean(days_since_prior_order, na.rm = T)) %>% 
+  ggplot(aes(x = order_number, y = days_since_last, color = cluster))+ 
+  geom_line(size = 1) +
+  #geom_hline(aes(yintercept = 10), linetype = 'dashed', show.legend = F) +
+  scale_color_instacart(palette = 'clusters', reverse = T) +
+  labs(x = 'Ordem do pedido', y = 'Dias desde a última compra', 
+       color = 'Cluster') +
+  theme(legend.position="bottom")
+
+
+orders_clusters_gg %>% 
+  group_by(cluster, order_number) %>% 
+  filter(cluster == 'Rafaela') %>% 
+  #filter(user_id == 202279) %>%
+  summarise(days_since_last = mean(days_since_prior_order, na.rm = T)) %>% 
+  ggplot(aes(x = order_number, y = days_since_last))+ 
+  geom_line(size = 1, show.legend = F, color = instacart_colors['orange']) +
+  #geom_hline(aes(yintercept = 10), linetype = 'dashed', show.legend = F) +
+  scale_color_instacart(palette = 'clusters', reverse = T) +
+  labs(x = 'Ordem do pedido', y = 'Dias desde a última compra', 
+       color = 'Cluster')
+  #theme(legend.position="bottom")
+
 
 glimpse(orders_clusters_gg)
 
@@ -374,17 +400,37 @@ orders_clusters_gg %>%
   scale_y_continuous(labels = scales::percent_format())
 
 
+library(ggridges)
+
+
+glimpse(orders_clusters_gg)
+
 orders_clusters_gg %>% 
-  group_by(cluster, order_dow, order_hour_of_day) %>%
+  mutate(dia = case_when(order_dow == 0 ~ 'Domingo',
+                         order_dow == 1 ~ 'Segunda',
+                         order_dow == 2 ~ 'Terça',
+                         order_dow == 3 ~ 'Quarta',
+                         order_dow == 4 ~ 'Quinta',
+                         order_dow == 5 ~ 'Sexta',
+                         order_dow == 6 ~ 'Sábado')) %>% 
+  #group_by(cluster, order_dow, dia, order_hour_of_day) %>%
   filter(cluster == 'Rafaela') %>% 
-  summarise(orders_n = n()) %>% 
-  ggplot(aes(x = order_hour_of_day, y = order_dow, size  = (orders_n/sum(orders_n))))+ 
-  geom_density(show.legend = F, color  = instacart_colors['orange']) +
+  #summarise(orders_n = n()) %>% 
+  ggplot(aes(x = as.numeric(order_hour_of_day), y = reorder(dia, order_dow))) + 
+  geom_density_ridges(show.legend = F, 
+                      color  = instacart_colors['orange'],
+                      fill = 'white') +
   #geom_hline(aes(yintercept = 10), linetype = 'dashed', show.legend = F) +
-  scale_fill_instacart(palette = 'clusters', reverse = F) +
-  labs(y = 'Percentual de Pedidos', x = 'Horário da compra', 
+  #scale_fill_instacart(palette = 'clusters', reverse = F) +
+  labs(y = '', x = 'Horário da compra', 
        color = 'Cluster') +
-  theme(legend.position="bottom")
+  #theme(legend.position="bottom") +
+  scale_x_continuous(breaks = seq(0, 24, 1))
+
+ggplot(iris, aes(x = Sepal.Length, y = Species)) + geom_density_ridges2()
+
+
+?geom_density()
 
 
 ```
