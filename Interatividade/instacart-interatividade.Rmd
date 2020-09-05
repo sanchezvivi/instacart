@@ -2,13 +2,11 @@
 title: "Instacart"
 output: 
   flexdashboard::flex_dashboard:
-    logo: logo_.png
-    orientation: rows
+    orientation: columns
     vertical_layout: fill
     theme: lumen
     runtime: shiny
 ---
-
 
 ```{r setup, include=FALSE}
 
@@ -32,7 +30,6 @@ library(lubridate)
 library(grid)
 library(shiny)
 library(factoextra)
-library(DT)
 
 theme_set(theme_minimal())
 theme_update(text = element_text(family = "Brandon Text"),
@@ -73,13 +70,10 @@ x2 <- function(x) x^2
 
 x_2 <- function(x) sqrt(x)
 
-
-
 # Wrangling ----------------------------------
 
 ## Heatmaps -----------
 
-<<<<<<< Updated upstream
  prod_ord_cart2 <- read_csv("../output/prod_ord_cart2.csv")
  
  prod_ord_cart_rec2 <- read_csv("../output/prod_ord_cart_rec2.csv")
@@ -95,36 +89,12 @@ x_2 <- function(x) sqrt(x)
 #prod_ord_cart2_list <- read_csv( "../data/prod_ord_cart2_list.csv")
 #
 #prod_ord_cart_rec2_list <- read_csv("../data/prod_ord_cart_rec2_list.csv")
-=======
-# prod_ord_cart2 <- read_csv("../output/prod_ord_cart2.csv")
-# 
-# prod_ord_cart_rec2 <- read_csv("../output/prod_ord_cart_rec2.csv")
-# 
-# prod_ord_cart2_list <- read_csv( "../output/prod_ord_cart2_list.csv")
-# 
-# prod_ord_cart_rec2_list <- read_csv("../output/prod_ord_cart_rec2_list.csv")
-
-
-
-
-prod_ord_cart2 <- read_csv("../data/prod_ord_cart2.csv")
-
-prod_ord_cart_rec2 <- read_csv("../data/prod_ord_cart_rec2.csv")
-
-prod_ord_cart2_list <- read_csv( "../data/prod_ord_cart2_list.csv")
-
-prod_ord_cart_rec2_list <- read_csv("../data/prod_ord_cart_rec2_list.csv")
->>>>>>> Stashed changes
-
 
 n_prod <- c(10:100)
-# 
-# ## Clusters ------------
 
-source("clusters_new.R")
+## Clusters ------------
 
-n_k <- reactiveValues(data = 7)
-
+source("clusters.R")
 
 ```
 
@@ -134,7 +104,7 @@ Heatmaps
 =====================================  
 
 
-Parâmetros {.sidebar data-width=200}
+Parâmetros {.sidebar}
 -----------------------------------------------------------------------
 
 ### Parâmetros
@@ -158,9 +128,8 @@ sliderInput("slider_n_prod", "Número de produtos",
 ```
 
 
-Row 
+Column 
 -----------------------------------------------------------------------
-
 ### Churn
 
 ```{r Graph_Heat}
@@ -168,85 +137,100 @@ Row
 renderPlot({
         prod_ord_cart2_list2 <- prod_ord_cart2_list[1:input$slider_n_prod,1]
         prod_100_n_rec <- prod_ord_cart2 %>% right_join(prod_ord_cart2_list2)
-
+        
         # "1", "x^2", "sqrt2", "x^4", "sqrt4"
         vline_size <- 5
         label_size <- min(7 + (2 * 100/input$slider_n_prod),12)
         n_prod1 <- 3.32
         texto1 <- "Média Produtos/Ordem = 3,32"
-        formato <- list(
-                theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)),
-                labs(title = "Produtos x Cart Order para clientes Churn",
-                     fill = "%", x = "Produto", y = "Ordem no carrinho"),
-                theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)),
-                geom_hline(yintercept = n_prod1, color = "orange"),
-                scale_y_continuous(limits = c(0,30), expand = c(0,0)),
-                geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ),
-                          size = vline_size, color = 'orange', hjust = 0, vjust = 0, fontface = "bold")
-        )
         if (input$funcao == "Linear"){
             prod_100_n_rec %>%
                 ggplot() +
-                geom_tile(aes(product_name,
-                              add_to_cart_order,
-                              fill = perc*100)) + 
-                scale_fill_gradient2(low = "white",
-                                     high = "darkgreen",
-                                     limits = c(0,40)) + 
-                formato
+                geom_tile(aes(product_name, 
+                              add_to_cart_order, 
+                              fill = perc*100)) +
+                scale_fill_gradient2(low = "white", 
+                                     high = "darkgreen", 
+                                     limits = c(0,40)) +
+                theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)) +
+                labs(title = "Produtos x Cart Order para clientes Churn", 
+                     fill = "%", x = "Produto", y = "Ordem no carrinho") +
+                theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+                geom_hline(yintercept = n_prod1, color = "orange") +
+                scale_y_continuous(limits = c(0,30), expand = c(0,0)) +
+                geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ), 
+                          size = vline_size, color = 'orange', hjust = 0, vjust = 0)
         } else {
             if (input$funcao == "Quadrado"){
-                prod_100_n_rec %>% 
-                    ggplot() +
-                    geom_tile(aes(product_name,
-                                  add_to_cart_order,
-                                  fill = perc*100)) + 
-                    scale_fill_gradient2(low = "white",
-                                         high = "darkgreen",
+                prod_100_n_rec %>% ggplot() +
+                    geom_tile(aes(product_name, 
+                                  add_to_cart_order, 
+                                  fill = perc*100)) +
+                    scale_fill_gradient2(low = "white", 
+                                         high = "darkgreen", 
                                          limits = c(0,40),
                                          trans = scales::trans_new(name = "quad",
-                                                                   transform = x2, 
-                                                                   inverse = x_2)) + 
-                    formato
+                                                                   transform = x2, inverse = x_2)) +
+                    theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)) +
+                    labs(title = "Produtos x Ordem no carrinho para clientes Churn", 
+                         fill = "%", x = "Produto", y = "Ordem no carrinho") +
+                    theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+                    geom_hline(yintercept = n_prod1, color = "orange") +
+                    scale_y_continuous(limits = c(0,30),expand = c(0,0)) +
+                    geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ),
+                              size = vline_size, color = 'orange', hjust = 0, vjust = 0)
             } else {
                 if (input$funcao == "Raiz Quadrada"){
                     prod_100_n_rec %>% ggplot() +
-                    geom_tile(aes(product_name,
-                                  add_to_cart_order,
+                    geom_tile(aes(product_name, 
+                                  add_to_cart_order, 
                                   fill = perc*100)) +
-                        scale_fill_gradient2(low = "white",
-                                             high = "darkgreen",
+                        scale_fill_gradient2(low = "white", 
+                                             high = "darkgreen", 
                                              limits = c(0,40),
                                              trans = scales::trans_new(name = "quad",
-                                                                       transform = x_2, 
-                                                                       inverse = x2))+
-                          formato
+                                                                       transform = x_2, inverse = x2))+
+                        theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)) +
+                        labs(title = "Produtos x Ordem no carrinho para clientes Churn", 
+                             fill = "%", x = "Produto", y = "Ordem no carrinho") +
+                        theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+                        geom_hline(yintercept = n_prod1, color = "orange") +
+                        scale_y_continuous(limits = c(0,30),expand = c(0,0)) +
+                        geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ), 
+                                  size = vline_size, color = 'orange', hjust = 0, vjust = 0)
                 } else {
                     if (input$funcao == "Quarta Potência"){
                         prod_100_n_rec %>% ggplot() +
-                        geom_tile(aes(product_name,
-                                      add_to_cart_order,
-                                      fill = perc*100)) + 
-                            scale_fill_gradient2(low = "white",
-                                                 high = "darkgreen",
-                                                 limits = c(0,40),
-                                                 trans = scales::trans_new(name = "quad",
-                                                                           transform = x4, 
-                                                                           inverse = x_4))+
-                            formato
+                        geom_tile(aes(product_name, 
+                                      add_to_cart_order, 
+                                      fill = perc*100)) +
+                            scale_fill_gradient2(low = "white", 
+                                                 high = "darkgreen", 
+                                                 limits = c(0,40),trans = scales::trans_new(name = "quad",transform = x4, inverse = x_4))+
+                            theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)) +
+                            labs(title = "Produtos x Cart_Order para clientes Churn", 
+                                 fill = "%", x = "Produto", y = "Ordem Carrinho") +
+                            theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+                            geom_hline(yintercept = n_prod1, color = "orange") +
+                            scale_y_continuous(limits = c(0,30),expand = c(0,0)) +
+                            geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ), 
+                                      size = vline_size, color = 'orange', hjust = 0, vjust = 0)
                     } else {
                         if (input$funcao == "Raiz Quarta"){
                             prod_100_n_rec %>% ggplot() +
-                              geom_tile(aes(product_name,
-                                            add_to_cart_order,
+                              geom_tile(aes(product_name, 
+                                            add_to_cart_order, 
                                             fill = perc*100)) +
-                                scale_fill_gradient2(low = "white",
-                                                     high = "darkgreen",
+                                scale_fill_gradient2(low = "white", 
+                                                     high = "darkgreen", 
                                                      limits = c(0,40),
-                                                     trans = scales::trans_new(name = "quad",
-                                                                               transform = x_4, 
-                                                                               inverse = x4))+
-                                  formato
+                                                     trans = scales::trans_new(name = "quad",transform = x_4, inverse = x4))+
+                                theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)) +
+                                labs(title = "Heatmap de Produtos x Cart_Order para clientes Churn", fill = "%", x = "Produto", y = "Ordem_Carrinho") +
+                                theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+                                geom_hline(yintercept = n_prod1, color = "orange") +
+                                scale_y_continuous(limits = c(0,30),expand = c(0,0)) +
+                                geom_text(aes(x = 5, y = n_prod1+0.1, label = texto1 ), size = vline_size, color = 'orange', hjust = 0, vjust = 0)
                         }
                     }
                 }
@@ -258,8 +242,6 @@ renderPlot({
 
 ```
 
-Row 
------------------------------------------------------------------------
 
 ### Clientes Recorrentes
 
@@ -272,89 +254,106 @@ renderPlot({
         n_prod2 <- 7.13
         label_size <- min(7 + (2 * 100/input$slider_n_prod),12)
         texto2 <- "Média Produtos/Ordem = 7,13"
-        formato2 <- list(
-                theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)),
-                labs(title = "Produtos x Ordem no carrinho para clientes Recorrentes",
-                     fill = "%", x = "Produto", y = "Ordem no carrinho"),
-                theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)),
-                geom_hline(yintercept = n_prod2, color = "orange"),
-                scale_y_continuous(limits = c(0,30),expand = c(0,0)),
-                geom_text(aes(x = 5, y = n_prod2+0.1, label = texto2 ),
-                          size = vline_size, color = 'orange', hjust = 0, vjust = 0, fontface = "bold")
-        )
         if (input$funcao == "Linear"){
             prod_100_rec %>% ggplot() +
-                    geom_tile(aes(product_name,
-                                  add_to_cart_order,
+                    geom_tile(aes(product_name, 
+                                  add_to_cart_order, 
                                   fill = perc*100)) +
-                scale_fill_gradient2(low = "white",
-                                     high = "darkgreen",
-                                     limits = c(0,40)) + 
-                formato2
+                scale_fill_gradient2(low = "white", 
+                                     high = "darkgreen", 
+                                     limits = c(0,40))+
+                theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)) +
+                labs(title = "Produtos x Ordem no carrinho para clientes Recorrentes", 
+                     fill = "%", x = "Produto", y = "Ordem no carrinho") +
+                theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+                geom_hline(yintercept = n_prod2, color = "orange") +
+                scale_y_continuous(limits = c(0,30),expand = c(0,0)) +
+                geom_text(aes(x = 5, y = n_prod2+0.1, label = texto2 ), 
+                          size = vline_size, color = 'orange', hjust = 0, vjust = 0)
         } else {
             if (input$funcao == "Quadrado"){
                 prod_100_rec %>% ggplot() +
-                    geom_tile(aes(product_name,
-                                  add_to_cart_order,
+                    geom_tile(aes(product_name, 
+                                  add_to_cart_order, 
                                   fill = perc*100)) +
-                    geom_tile(aes(reorder(product_name,
-                                          desc(recorrencias),
-                                          FUN = mean),
-                                  add_to_cart_order,
+                    geom_tile(aes(reorder(product_name, 
+                                          desc(recorrencias), 
+                                          FUN = mean), 
+                                  add_to_cart_order, 
                                   fill = perc*100)) +
-                    scale_fill_gradient2(low = "white",
-                                         high = "darkgreen",
+                    scale_fill_gradient2(low = "white", 
+                                         high = "darkgreen", 
                                          limits = c(0,40),
-                                         trans = scales::trans_new(name = "quad", 
-                                                                   transform = x2,
+                                         trans = scales::trans_new(name = "quad", transform = x2, 
                                                                    inverse = x_2))+
-                    formato2
+                    theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)) +
+                    labs(title = "Produtos x Ordem no carrinho para clientes Recorrentes", 
+                         fill = "%", x = "Produto", y = "Ordem no carrinho") +
+                    theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+                    geom_hline(yintercept = n_prod2, color = "orange") +
+                    scale_y_continuous(limits = c(0,30),expand = c(0,0)) +
+                    geom_text(aes(x = 5, y = n_prod2+0.1, label = texto2 ), 
+                              size = vline_size, color = 'orange', hjust = 0, vjust = 0)
             } else {
                 if (input$funcao == "Raiz Quadrada"){
                     prod_100_rec %>% ggplot() +
-                    geom_tile(aes(product_name,
-                                  add_to_cart_order,
+                    geom_tile(aes(product_name, 
+                                  add_to_cart_order, 
                                   fill = perc*100)) +
-                        scale_fill_gradient2(low = "white",
-                                             high = "darkgreen",
+                        scale_fill_gradient2(low = "white", 
+                                             high = "darkgreen", 
                                              limits = c(0,40),
                                              trans = scales::trans_new(name = "quad",
-                                                                       transform = x_2, 
-                                                                       inverse = x2)) + 
-                        formato2
+                                                                       transform = x_2, inverse = x2))+
+                        theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)) +
+                        labs(title = "Produtos x Ordem no carrinho para clientes Recorrentes", 
+                             fill = "%", x = "Produto", y = "Ordem no carrinho") +
+                        theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+                        geom_hline(yintercept = n_prod2, color = "orange") +
+                        scale_y_continuous(limits = c(0,30),expand = c(0,0)) +
+                        geom_text(aes(x = 5, y = n_prod2+0.1,
+                                      label = texto2 ),
+                                  size = vline_size, color = 'orange', hjust = 0, vjust = 0)
                 } else {
                     if (input$funcao == "Quarta Potência"){
                         prod_100_rec %>% ggplot() +
-                        geom_tile(aes(product_name,
-                                      add_to_cart_order,
+                        geom_tile(aes(product_name, 
+                                      add_to_cart_order, 
                                       fill = perc*100)) +
-                            scale_fill_gradient2(low = "white",
-                                                 high = "darkgreen",
-                                                 limits = c(0,40),
-                                                 trans = scales::trans_new(name = "quad",
-                                                                           transform = x4, 
-                                                                           inverse = x_4)) +
-                            formato2
+                            scale_fill_gradient2(low = "white", 
+                                                 high = "darkgreen", 
+                                                 limits = c(0,40),trans = scales::trans_new(name = "quad",transform = x4, inverse = x_4))+
+                            theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)) +
+                            labs(title = "Produtos x Ordem no carrinho para clientes Recorrentes", 
+                                 fill = "%", x = "Produto", y = "Ordem no carrinho") +
+                            theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+                            geom_hline(yintercept = n_prod2, color = "orange") +
+                            scale_y_continuous(limits = c(0,30),expand = c(0,0)) +
+                            geom_text(aes(x = 5, y = n_prod2+0.1, label = texto2 ), size = vline_size, color = 'orange', hjust = 0, vjust = 0)
                     } else {
                         if (input$funcao == "Raiz Quarta"){
                             prod_100_rec %>% ggplot() +
-                            geom_tile(aes(product_name,
-                                          add_to_cart_order,
+                            geom_tile(aes(product_name, 
+                                          add_to_cart_order, 
                                           fill = perc*100)) +
-                                scale_fill_gradient2(low = "white",
-                                                     high = "darkgreen",
-                                                     limits = c(0,40),
-                                                     trans = scales::trans_new(name = "quad",
-                                                                               transform = x_4, 
-                                                                               inverse = x4)) +
-                                formato2
+                                scale_fill_gradient2(low = "white", 
+                                                     high = "darkgreen", 
+                                                     limits = c(0,40),trans = scales::trans_new(name = "quad",transform = x_4, inverse = x4))+
+                                theme(axis.text.x = element_text(angle = 90, size = label_size, hjust = 1)) +
+                                labs(title = "Produtos x Ordem no carrinho para clientes Recorrentes", 
+                                     fill = "%", x = "Produto", y = "Ordem no carrinho") +
+                                theme(axis.text.x = element_text(hjust = 1.0, vjust = 0.3)) + 
+                                geom_hline(yintercept = n_prod2, color = "orange") +
+                                scale_y_continuous(limits = c(0,30),expand = c(0,0)) +
+                                geom_text(aes(x = 5, y = n_prod2+0.1, label = texto2 ), 
+                                          size = vline_size, color = 'orange', hjust = 0, vjust = 0)
                         }
                     }
                 }
             }
         }
-
-
+        
+        
     })
 
 
@@ -364,7 +363,7 @@ renderPlot({
 Clusters
 =====================================  
 
-Parâmetros {.sidebar data-width=200}
+Parâmetros {.sidebar}
 -----------------------------------------------------------------------
 
 ### Parâmetros
@@ -378,172 +377,134 @@ sliderInput("k", "Número de Clusters",
 
 actionButton("submit", text = "Atualizar",icon("refresh"))
 
+n_k <- reactiveValues(data = 7)
 
 ```
 
-
-Row {data-heigth=80 .no-padding}
+Column 
 -----------------------------------------------------------------------
-
-```{r}
-
-clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = 7)
-
-base_graf_exp <- base_k_user %>%
-  bind_cols(cluster = clust_kmean$cluster)
-
-base_graf_exp %>% write.csv("..\\data\\base_graf_exp.csv")
-
-```
-
-
 ### Clusters - Duplo clique no cluster para ver detalhes
 
-```{r Cluster_Spider, set.seed(321)}
+```{r Cluster_Spider}
 
 plotOutput("spider", dblclick = dblclickOpts(
                id = "plot_dblclick"
            ))
 
+# n_k <- eventReactive(input$submit, {input$k})
 observeEvent(input$submit,{n_k$data <- input$k})
 
-clust <- function (base,x) base[,c(2:ncol(base))] %>% scale(center = F) %>% hkmeans(k = x)
-
-clust_kmean <- reactive({clust(base_k_user,n_k$data)})
-
-
 output$spider <- renderPlot({
-        # clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = n_k$data)
-        #
-
+        # generate bins based on input$bins from ui.R
+        set.seed(123)
+        clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = n_k$data)
+        
+        
         # Calculando os perfis dos clusters
-
-        dados_clusters <- clust_kmean()$centers
-
+        # dados_clusters <- (clust_kmean$centers * (clust_kmean$data %>% attr("scaled:scale"))) + (clust_kmean$data %>% attr("scaled:center"))
+        
+        dados_clusters <- clust_kmean$centers
+        
+        # A partir da análise é possível definir o perfil dos clusters, para poder dar um nome aos mesmos
+        # dados_clusters <- tibble(cluster = rownames(dados_clusters), nome_cluster = c("Compra_Quant","Churn","Fiel_e_Recorrente","Novo_com_Potencial")) %>% bind_cols(as_tibble(dados_clusters))
         dados_clusters <- tibble(cluster = rownames(dados_clusters)) %>% bind_cols(as_tibble(dados_clusters))
         
-        c <- "orange"
-        nc <- "green"
-
         spider <- dados_clusters %>% ggRadar(aes(x = c(n_compras,
                                                        t_mean,
                                                        mean_prod_cart,
                                                        mean_peso_cart,
                                                        mean_rec_fat),
-                                                 facet = cluster),
+                                                 facet = cluster), 
                                              interactive = F,
                                              size = 1.5,
-                                             legend.position = "none") + 
-                                              scale_colour_manual(values=c(nc,nc,nc,nc,c,nc,nc))+
-                                              scale_fill_manual(values=c(nc,nc,nc,nc,c,nc,nc))
+                                             legend.position = "right"
+                                             )
         spider
     })
 
 
 ```
 
+### connection
 
-### Dados dos Clusters
+```{r Cluster_Text, warning=FALSE, error=FALSE}
 
-```{r Cluster_Text2, warning=FALSE, error=FALSE}
-
-renderDT({
-  # clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = n_k$data)
-  
+renderPrint({
+        
+        clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = n_k$data)
+        # (clust_kmean$centers * (clust_kmean$data %>% attr("scaled:scale"))) 
+        #                     + (clust_kmean$data %>% attr("scaled:center")) %>% 
+        #                         filter(cluster = input$plot_dblclick$panelvar1)
+        # clust_kmean$size[as.numeric(input$plot_dblclick$panelvar1)]
         if (is.null(input$plot_dblclick$panelvar1)){
             base_graf_exp <- base_k_user %>%
-                              bind_cols(cluster = clust_kmean()$cluster)
-
-            print(base_graf_exp %>% 
-                    select(-user_id) %>% 
-                    group_by(cluster) %>% 
-                    summarise(n_compras = mean(n_compras) %>% round(2),
-                              t_mean = mean(t_mean) %>% round(2),
-                              mean_prod_cart = mean(mean_prod_cart) %>% round(2),
-                              mean_peso_cart = mean(mean_peso_cart) %>% round(2),
-                              mean_rec_fat = mean(mean_rec_fat) %>% round(2)) %>% 
-                    data.frame());
+                              bind_cols(cluster = clust_kmean$cluster)
+    
+            print(base_graf_exp %>% select(-user_id) %>% group_by(cluster) %>% summarise(n_compras = mean(n_compras), 
+                                                                                         t_mean = mean(t_mean), 
+                                                                                         mean_prod_cart = mean(mean_prod_cart), 
+                                                                                         mean_peso_cart = mean(mean_peso_cart), 
+                                                                                         mean_rec_fat = mean(mean_rec_fat)));
+            print(clust_kmean$size)
         } else {
             base_graf_exp <- base_k_user %>%
-                              bind_cols(cluster = clust_kmean()$cluster)
-
-            print(base_graf_exp %>% 
-                    select(-user_id) %>% 
-                    group_by(cluster) %>% 
-                    summarise(n_compras = mean(n_compras) %>% round(2),
-                              t_mean = mean(t_mean) %>% round(2),
-                              mean_prod_cart = mean(mean_prod_cart) %>% round(2),
-                              mean_peso_cart = mean(mean_peso_cart) %>% round(2),
-                              mean_rec_fat = mean(mean_rec_fat) %>% round(2)) %>%
-                    filter(cluster == input$plot_dblclick$panelvar1) %>% 
-                    data.frame());
+                              bind_cols(cluster = clust_kmean$cluster)
+    
+            print(base_graf_exp %>% select(-user_id) %>% group_by(cluster) %>% summarise(n_compras = mean(n_compras), 
+                                                                                         t_mean = mean(t_mean), 
+                                                                                         mean_prod_cart = mean(mean_prod_cart), 
+                                                                                         mean_peso_cart = mean(mean_peso_cart), 
+                                                                                         mean_rec_fat = mean(mean_rec_fat)) %>% 
+                    filter(cluster == input$plot_dblclick$panelvar1));
+            print(clust_kmean$size[as.numeric(input$plot_dblclick$panelvar1)])
         }
-  
-},class = 'cell-border stripe')
-  
-```
+    })
 
-Row {data-height=400 .no-padding}
------------------------------------------------------------------------
+```
 
 ### Produtos
 
 ```{r Cluster_TreeMap, warning=FALSE, error=FALSE}
 
 renderD3tree3({
-  if (is.null(input$plot_dblclick$panelvar1)){
-              base_graf2 <- base_k_user %>%
-                              bind_cols(cluster = clust_kmean()$cluster)
-  
-          cores <- unname(instacart_colors)
-          base_ord_geral_all %>%
-              right_join(base_graf2 %>% select(user_id)) %>%
-              group_by(aisle, product_name) %>%
-              summarise(contagem = n()) %>%
-              arrange(desc(contagem)) %>%
-              data.frame() %>%
-              slice_head(n = 50) %>%
-              treemap(base_ord_geral_all,
-                      index=c("aisle","product_name"),
-                      vSize="contagem",
-                      type="index",
-                      # palette = "Set2",
-                      palette = cores[1:length(cores)],
-                      bg.labels=c("white"),
-                      align.labels=list(
-                          c("center", "center"),
-                          c("right", "bottom")
-                      )
-              ) %>% d3tree2(rootname = "Principais Produtos")
-  } else {
-          base_graf2 <- base_k_user %>%
-                              bind_cols(cluster = clust_kmean()$cluster) %>%
-                              filter(cluster == as.numeric(input$plot_dblclick$panelvar1))
-  
-          cores <- unname(instacart_colors)
-          base_ord_geral_all %>%
-              right_join(base_graf2 %>% select(user_id)) %>%
-              group_by(aisle, product_name) %>%
-              summarise(contagem = n()) %>%
-              arrange(desc(contagem)) %>%
-              data.frame() %>%
-              slice_head(n = 50) %>%
-              treemap(base_ord_geral_all,
-                      index=c("aisle","product_name"),
-                      vSize="contagem",
-                      type="index",
-                      # palette = "Set2",
-                      palette = cores[1:length(cores)],
-                      bg.labels=c("white"),
-                      align.labels=list(
-                          c("center", "center"),
-                          c("right", "bottom")
-                      )
-              ) %>% d3tree2(rootname = "Principais Produtos")
-  }
-
-
-
+        clust_kmean <- base_k_user[,c(2:ncol(base_k_user))] %>% scale() %>% hkmeans(k = n_k$data)
+        base_graf2 <- base_k_user %>%
+                            bind_cols(cluster = clust_kmean$cluster) %>%
+                            filter(cluster == as.numeric(input$plot_dblclick$panelvar1))
+        # base_ord_geral_all %>%
+        #     right_join(base_graf2 %>% select(user_id)) %>%
+        #     group_by(aisle) %>%
+        #     summarise(contagem = n()) %>%
+        #     arrange(desc(contagem)) %>%
+        #     top_n(10) %>%
+        #     ggplot(aes(x = reorder(aisle,desc(contagem)), y = contagem)) +
+        #     geom_col(color = "darkorange", fill = "darkgreen")+
+        #     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+        #     scale_y_log10()
+        cores <- unname(instacart_colors)
+        base_ord_geral_all %>%
+            right_join(base_graf2 %>% select(user_id)) %>%
+            group_by(aisle, product_name) %>%
+            summarise(contagem = n()) %>%
+            arrange(desc(contagem)) %>%
+            data.frame() %>%
+            slice_head(n = 50) %>% 
+            treemap(base_ord_geral_all,
+                    index=c("aisle","product_name"),
+                    vSize="contagem",
+                    type="index",
+                    # palette = "Set2",
+                    palette = cores[1:length(cores)],
+                    bg.labels=c("white"),
+                    align.labels=list(
+                        c("center", "center"), 
+                        c("right", "bottom")
+                    )
+            ) %>% d3tree2(rootname = "Principais Produtos")
+        # make it interactive ("rootname" becomes the title of the plot):
+        # inter <- d3tree2(p, rootname = "Pricipais Produtos")
+        # inter
+                        
     })
 
 ```
