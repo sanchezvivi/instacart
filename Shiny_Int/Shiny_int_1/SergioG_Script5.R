@@ -359,6 +359,3 @@ inter
 # Resultado: falha para rodar o k_means devido ao tamanho da base
 # Próximo passo
 # criar um sample da base para isso e também ver para Kendall e Pearson (análise e seguir)
-getwd()
-base_k_user <- read.csv("data\\base_graf_exp.csv")
-base_k_user <- base_k_user[2:ncol(base_k_user)]
